@@ -18,5 +18,5 @@ def calculate_edge_length(edge:np.ndarray,pixelXsize=1,pixelYsize=1)->float:
     for x in range (0,len(edge)-1):
         edgelength=edgelength+np.sqrt(pixelYsize**2+((centeredge[x]-centeredge[x+1])*pixelXsize)**2)
     #since there's 1 less tangent line than pixels
-    edgelength=edgelength+1
+    edgelength=edgelength+pixelYsize
     return edgelength
