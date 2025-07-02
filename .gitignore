@@ -3,3 +3,7 @@ __pycache__/
 poetry.toml
 
 *.mp4
+*.gif
+*.png
+*.jpg
+*.jpeg
