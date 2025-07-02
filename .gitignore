@@ -7,3 +7,7 @@ poetry.toml
 *.png
 *.jpg
 *.jpeg
+!docs/**/*.gif
+!docs/**/*.png
+!docs/**/*.jpg
+!docs/**/*.jpeg
