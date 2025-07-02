@@ -5,7 +5,7 @@ from .basic import (
     apply_local_constant_potential,
     apply_QH_energy,
     find_edge,
-    calculate_edge_length,
+    calc_edge_length,
 )
 from .const import (
     h,

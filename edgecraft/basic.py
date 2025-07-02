@@ -159,7 +159,7 @@ def find_edge(
     return edge
 
 
-def calculate_edge_length(
+def calc_edge_length(
     edge: np.ndarray,
     pixel_x: int = 1,
     pixel_y: int = 1,
