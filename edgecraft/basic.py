@@ -207,11 +207,14 @@ def calc_scale_factor(
 
     Args:
         edge_lengths (np.ndarray): Current lengths of the edges.
-        init_length (float): Desired initial length for the edges.
+        init_length (float): Desired initial length for the edges. The value
+            must be positive and non-zero.
 
     Returns:
         np.ndarray: The scale factors to apply.
     """
     if np.any(edge_lengths == 0):
         raise ValueError("Edge lengths cannot be zero.")
+    if init_length <= 0:
+        raise ValueError("Initial length must be positive and non-zero.")
     return edge_lengths / init_length
