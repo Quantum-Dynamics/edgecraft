@@ -9,9 +9,16 @@ from .basic import (
 )
 from .const import (
     h,
+    hbar,
     c,
     e,
     hc,
     magnetic_flux_quantum,
     klitzing_constant,
+    dielectric_vacuum,
+    dielectric_GaAs,
+    m_e,
+    m_GaAs,
+    k_B,
+    calc_magnetic_length,
 )
