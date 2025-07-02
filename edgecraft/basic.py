@@ -196,3 +196,22 @@ def calc_edge_length(
 
     # since there's 1 less tangent line than pixels
     return np.sqrt(dx**2 + dy**2).sum() + pixel_y
+
+
+def calc_scale_factor(
+    edge_lengths: np.ndarray,
+    init_length: float,
+) -> np.ndarray:
+    """
+    Calculate the scale factor to adjust the edge length to a target length.
+
+    Args:
+        edge_lengths (np.ndarray): Current lengths of the edges.
+        init_length (float): Desired initial length for the edges.
+
+    Returns:
+        np.ndarray: The scale factors to apply.
+    """
+    if np.any(edge_lengths == 0):
+        raise ValueError("Edge lengths cannot be zero.")
+    return edge_lengths / init_length
