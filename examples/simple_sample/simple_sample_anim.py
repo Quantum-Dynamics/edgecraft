@@ -153,4 +153,4 @@ def plot_anim(index: int) -> None:
 
 if __name__ == "__main__":
     anim = animation.FuncAnimation(fig, plot_anim, interval=100, frames=frames)
-    anim.save("simple_sample.mp4", dpi=300)
+    anim.save("simple_sample.gif")
