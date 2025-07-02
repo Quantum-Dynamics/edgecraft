@@ -1,5 +1,7 @@
 # edgecraft
 
+![simple_sample](./docs/res/simple_sample.gif)
+
 ## Installing
 
 - Python: ^3.10
