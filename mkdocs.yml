@@ -1,0 +1,28 @@
+site_name: edgecraft
+site_description: Quantum Hall edge deformation simulator for analog universe experiments.
+site_url: https://Quantum-Dynamics.github.io/edgecraft/
+repo_url: https://github.com/Quantum-Dynamics/edgecraft
+repo_name: Quantum-Dynamics/edgecraft
+
+theme:
+  name: material
+  palette:
+    scheme: default
+  features:
+    - navigation.instant
+    - navigation.tabs
+    - navigation.expand
+    - navigation.top
+    - search.highlight
+  language: en
+
+markdown_extensions:
+  - admonition
+  - pymdownx.highlight
+  - pymdownx.snippets
+  - pymdownx.superfences
+
+plugins:
+  - search
+  - mkdocstrings:
+      default_handler: python
