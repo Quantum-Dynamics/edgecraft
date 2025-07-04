@@ -55,12 +55,13 @@ def calc_magnetic_length(B: float) -> float:
     return np.sqrt(hbar / (e * B))
 
 
-def calc_unit_length_energy(
+def calc_unit_length_energy_time(
     B: float,
     multiplier: float,
-) -> tuple[float, float]:
+) -> tuple[float, float, float]:
     """
-    Calculate unit energy for a given magnetic field strength and length scale.
+    Calculate unit length, energy and time for a given magnetic field
+    strength.
 
     Parameters
     ----------
@@ -71,11 +72,13 @@ def calc_unit_length_energy(
 
     Returns
     -------
-    tuple[float, float]
-        Unit length (m) and unit energy (J).
+    tuple[float, float, float]
+        Unit length (m), unit energy (J) and unit time (s).
     """
     unit_length = calc_magnetic_length(B) * multiplier
-    return unit_length, e**2 / (4 * np.pi * dielectric_GaAs * unit_length)
+    unit_energy = e**2 / (4 * np.pi * dielectric_GaAs * unit_length)
+    unit_time = hbar / unit_energy
+    return unit_length, unit_energy, unit_time
 
 
 def calc_Landau_level_gap(B: float, unit_energy: float | None = None) -> float:
