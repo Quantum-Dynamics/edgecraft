@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import scipy
 
 def true_circle_in(
     Y: np.ndarray,
@@ -197,6 +198,8 @@ def calc_edge_length(
     # since there's 1 less tangent line than pixels
     return np.sqrt(dx**2 + dy**2).sum() + pixel_y
 
+
+
 #This produces a(t), not a(tau)
 def calc_scale_factor(
     edge_lengths: np.ndarray,
@@ -213,6 +216,7 @@ def calc_scale_factor(
     Returns:
         np.ndarray: The scale factors to apply.
     """
+    edge_lengths=np.array(edge_lengths)
     if np.any(edge_lengths == 0):
         raise ValueError("Edge lengths cannot be zero.")
     if init_length <= 0:
@@ -241,6 +245,7 @@ def find_local_potential_magnitude(
         num=np.where(np.square( z -sf_new[time_step])==np.full_like( z, min(np.square( z - sf_new[time_step]))))[0][0]
         ret[time_step]=num*E_F/100
     return ret
+
 
 def test_local_potential_magnitude(
     energy:np.ndarray, 
