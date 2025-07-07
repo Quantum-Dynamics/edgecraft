@@ -218,3 +218,80 @@ def calc_scale_factor(
     if init_length <= 0:
         raise ValueError("Initial length must be positive and non-zero.")
     return edge_lengths / init_length
+
+
+def calc_effective_potential_from_scale_factor(
+    target_scale_factors: np.ndarray,
+    edge_length_vs_potential_data: tuple[np.ndarray, np.ndarray],
+    init_length: float,
+) -> np.ndarray:
+    """
+    Calculate the effective potential required to achieve target scale factors.
+    
+    This function performs the inverse calculation: given desired scale factors,
+    find the effective potential values that would produce those scale factors.
+    
+    Args:
+        target_scale_factors (np.ndarray): Desired scale factor values.
+        edge_length_vs_potential_data (tuple): Tuple of (gate_potentials, edge_lengths)
+            arrays that define the relationship between potential and edge length.
+        init_length (float): Initial edge length for scale factor calculation.
+    
+    Returns:
+        np.ndarray: Effective potential values that produce the target scale factors.
+    """
+    gate_potentials, edge_lengths = edge_length_vs_potential_data
+    
+    # Convert target scale factors to target edge lengths
+    target_edge_lengths = target_scale_factors * init_length
+    
+    # Interpolate to find required potentials
+    effective_potentials = np.interp(target_edge_lengths, edge_lengths, gate_potentials)
+    
+    return effective_potentials
+
+
+def generate_time_array(
+    total_time_ns: float,
+    time_step_ns: float,
+) -> np.ndarray:
+    """
+    Generate a time array for voltage waveform export.
+    
+    Args:
+        total_time_ns (float): Total time duration in nanoseconds.
+        time_step_ns (float): Time step size in nanoseconds.
+    
+    Returns:
+        np.ndarray: Time array in nanoseconds.
+    """
+    return np.arange(0, total_time_ns + time_step_ns, time_step_ns)
+
+
+def export_voltage_waveform(
+    time_ns: np.ndarray,
+    effective_potential: np.ndarray,
+    convert_to_voltage_func,
+    time_filename: str = "time_ns.txt",
+    voltage_filename: str = "waveform_V.txt",
+) -> None:
+    """
+    Export time and voltage arrays to text files for experimental use.
+    
+    Args:
+        time_ns (np.ndarray): Time array in nanoseconds.
+        effective_potential (np.ndarray): Effective potential array.
+        convert_to_voltage_func: Function that converts effective potential to voltage.
+            Should have signature: func(eff_potential: np.ndarray) -> np.ndarray
+        time_filename (str): Filename for time data. Defaults to "time_ns.txt".
+        voltage_filename (str): Filename for voltage data. Defaults to "waveform_V.txt".
+    """
+    if len(time_ns) != len(effective_potential):
+        raise ValueError("Time and effective potential arrays must have the same length.")
+    
+    # Convert effective potential to voltage using the provided function
+    voltage_V = convert_to_voltage_func(effective_potential)
+    
+    # Export to text files using numpy.savetxt
+    np.savetxt(time_filename, time_ns, fmt='%.6f')
+    np.savetxt(voltage_filename, voltage_V, fmt='%.6f')

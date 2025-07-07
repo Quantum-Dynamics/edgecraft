@@ -6,6 +6,10 @@ from .basic import (
     apply_QH_energy,
     find_edge,
     calc_edge_length,
+    calc_scale_factor,
+    calc_effective_potential_from_scale_factor,
+    generate_time_array,
+    export_voltage_waveform,
 )
 from .const import (
     h,
