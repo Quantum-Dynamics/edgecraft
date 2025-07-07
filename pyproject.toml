@@ -5,6 +5,9 @@ description = "Quantum Hall edge deformation simulator for analog universe exper
 authors = ["Yunhyeon Jeong <jjj999to@gmail.com>"]
 readme = "README.md"
 
+[tool.poetry.scripts]
+edgecraft = "edgecraft.cli:cli"
+
 [tool.poetry.dependencies]
 python = "^3.10"
 matplotlib = "^3.10.1"
