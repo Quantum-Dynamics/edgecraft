@@ -21,8 +21,20 @@ markdown_extensions:
   - pymdownx.highlight
   - pymdownx.snippets
   - pymdownx.superfences
+  - pymdownx.arithmatex:
+      generic: true
 
 plugins:
   - search
   - mkdocstrings:
       default_handler: python
+
+extra_javascript:
+  - javascripts/mathjax.js
+  - https://polyfill.io/v3/polyfill.min.js?features=es6
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+
+nav:
+  - Home: index.md
+  - Theoretical Principles: principles.md
+  - API Reference: api.md
