@@ -150,3 +150,23 @@ def calc_magneticfield_for_nu(
         Magnetic field strength (T).
     """
     return electron_density * magnetic_flux_quantum / filling_factor
+
+
+def calc_time_unit(unit_energy: float) -> float:
+    """
+    Calculate the unit time for the system based on the unit energy.
+    
+    This is the characteristic time scale used in quantum Hall research:
+    t_0 = ħ / E_0
+    
+    Parameters
+    ----------
+    unit_energy : float
+        Unit energy (J).
+        
+    Returns
+    -------
+    float
+        Unit time (s).
+    """
+    return hbar / unit_energy

@@ -218,3 +218,112 @@ def calc_scale_factor(
     if init_length <= 0:
         raise ValueError("Initial length must be positive and non-zero.")
     return edge_lengths / init_length
+
+
+def find_gate_potential_for_scale_factor(
+    target_scale_factors: np.ndarray,
+    reference_scale_factors: np.ndarray,
+    reference_potentials: np.ndarray,
+) -> np.ndarray:
+    """
+    Find gate potentials that produce desired scale factors using a lookup
+    table approach.
+    
+    This implements Miller903's algorithm: for each target scale factor,
+    find the reference potential that produces the closest scale factor.
+    
+    Args:
+        target_scale_factors (np.ndarray): Array of desired scale factors a(t).
+        reference_scale_factors (np.ndarray): Array of scale factors from 
+            reference simulation.
+        reference_potentials (np.ndarray): Array of gate potentials from 
+            reference simulation corresponding to reference_scale_factors.
+            
+    Returns:
+        np.ndarray: Array of gate potentials that should produce the target
+            scale factors.
+    """
+    if len(reference_scale_factors) != len(reference_potentials):
+        raise ValueError("Reference arrays must have the same length.")
+    
+    target_potentials = np.zeros_like(target_scale_factors)
+    
+    for i, target_a in enumerate(target_scale_factors):
+        # Find the index that minimizes |a_0(tau) - a(tau_0)|
+        diff = np.abs(reference_scale_factors - target_a)
+        closest_idx = np.argmin(diff)
+        target_potentials[i] = reference_potentials[closest_idx]
+    
+    return target_potentials
+
+
+def optimize_gate_potential_for_scale_factor(
+    target_scale_factor: float,
+    energy: np.ndarray,
+    E_F: float,
+    U_fluc: float,
+    bulk: np.ndarray,
+    gate_indices: np.ndarray,
+    initial_edge_length: float,
+    potential_range: tuple[float, float] = (-1.0, 1.0),
+    tolerance: float = 1e-3,
+    max_iterations: int = 100,
+) -> float:
+    """
+    Find the gate potential that produces a specific target scale factor
+    using iterative optimization.
+    
+    This implements a more sophisticated version of the naive algorithm
+    mentioned in the issue.
+    
+    Args:
+        target_scale_factor (float): Desired scale factor a = l/l_0.
+        energy (np.ndarray): Base energy array before gate potential is applied.
+        E_F (float): Fermi energy.
+        U_fluc (float): Energy fluctuation parameter.
+        bulk (np.ndarray): Bulk region mask.
+        gate_indices (np.ndarray): Indices where gate potential is applied.
+        initial_edge_length (float): Initial edge length l_0.
+        potential_range (tuple): Min and max gate potential to search.
+        tolerance (float): Convergence tolerance for scale factor.
+        max_iterations (int): Maximum number of optimization iterations.
+        
+    Returns:
+        float: Gate potential that produces the target scale factor.
+        
+    Raises:
+        ValueError: If optimization fails to converge.
+    """
+    min_potential, max_potential = potential_range
+    
+    for iteration in range(max_iterations):
+        # Try the midpoint of current range
+        test_potential = (min_potential + max_potential) / 2
+        
+        # Apply gate potential to energy
+        test_energy = np.copy(energy)
+        test_energy = apply_local_constant_potential(
+            test_energy, test_potential, gate_indices
+        )
+        
+        # Calculate resulting scale factor
+        edge = find_edge(test_energy, E_F, U_fluc, bulk)
+        edge_length = calc_edge_length(edge)
+        current_scale_factor = edge_length / initial_edge_length
+        
+        # Check convergence
+        if abs(current_scale_factor - target_scale_factor) < tolerance:
+            return test_potential
+        
+        # Update search range based on result
+        if current_scale_factor < target_scale_factor:
+            # Need more positive potential to increase scale factor
+            min_potential = test_potential
+        else:
+            # Need more negative potential to decrease scale factor
+            max_potential = test_potential
+    
+    raise ValueError(
+        f"Failed to converge after {max_iterations} iterations. "
+        f"Target: {target_scale_factor}, Current: {current_scale_factor}"
+    )

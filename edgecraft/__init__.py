@@ -6,6 +6,9 @@ from .basic import (
     apply_QH_energy,
     find_edge,
     calc_edge_length,
+    calc_scale_factor,
+    find_gate_potential_for_scale_factor,
+    optimize_gate_potential_for_scale_factor,
 )
 from .const import (
     h,
@@ -25,4 +28,5 @@ from .const import (
     calc_Landau_level_gap,
     calc_thermal_energy,
     calc_magneticfield_for_nu,
+    calc_time_unit,
 )
