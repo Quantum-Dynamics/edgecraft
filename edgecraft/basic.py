@@ -221,7 +221,20 @@ def calc_scale_factor(
 
 
 z=[1.0, 1.00181647, 1.00233986, 1.00197199, 0.99921831, 0.99616936, 1.00000824, 0.9926788, 0.99237877, 0.98929161, 0.98700012, 0.98926276, 0.99148228, 0.98991167, 0.98637445, 0.98465333, 0.98185404, 0.98112822, 0.97890197, 0.9789603, 0.97848629, 0.97549055, 0.97382198, 0.97311535, 0.97141065, 0.96791029, 0.96593576, 0.96441596, 0.96487272, 0.96363323, 0.96040381, 0.95580296, 0.95471983, 0.95630941, 0.95362431, 0.94666045, 0.94476613, 0.94536507, 0.9454678, 0.94105204, 0.93250722, 0.93637904, 0.9360115, 0.9316766, 0.92475942, 0.9276849, 0.9276849, 0.92529593, 0.92866815, 0.93223542, 0.93223542, 0.93223542, 0.93223542, 0.93223542, 0.93223542, 0.93223542, 0.93223542, 0.93223542, 0.93223542, 0.93223542, 0.93223542, 0.93223542, 0.93223542, 0.93223542, 0.93223542, 0.93223542, 0.93223542, 0.93223542, 0.93223542, 0.93223542, 0.93223542, 0.93223542, 0.93223542, 0.93223542, 0.93223542, 0.93223542, 0.93223542, 0.93223542, 0.93223542, 0.93223542, 0.93223542, 0.93223542, 0.93223542, 0.93223542, 0.93223542, 0.93223542, 0.93223542, 0.93223542, 0.93223542, 0.93223542, 0.93223542, 0.93223542, 0.93223542, 0.93223542, 0.93223542, 0.93223542, 0.93223542, 0.93223542, 0.93223542, 0.93223542, 0.93223542]
-def find_local_potential_magnitude(desired_scale_factor: np.ndarray,E_F:float)->np.ndarray:
+def find_local_potential_magnitude(
+    desired_scale_factor: np.ndarray,
+    E_F:float,
+)->np.ndarray:
+    """
+    Calculate the required local potential magnitude for a scale factor closest to the desired scale factor
+
+    Args:
+        desired_scale_factor (np.ndarray): 1D array of scale factor at various time steps. Each element should satisfy .93<=scale_factor[t]<=1.
+        E_F (float): Fermi energy of the material
+
+    Returns:
+        np.ndarray: an array with the required local potential at each step.
+    """
     ret=np.full_like(desired_scale_factor,0.0)
     sf_new=desired_scale_factor/np.max(desired_scale_factor)
     for time_step in range(0,len(desired_scale_factor)):
@@ -229,7 +242,26 @@ def find_local_potential_magnitude(desired_scale_factor: np.ndarray,E_F:float)->
         ret[time_step]=num*E_F/100
     return ret
 
-def test_local_potential_magnitude(energy:np.ndarray, local_potential_position:np.ndarray,local_potential_magnitude:np.ndarray,E_F:float,U_fluc:float) ->np.ndarray:
+def test_local_potential_magnitude(
+    energy:np.ndarray, 
+    local_potential_position:np.ndarray,
+    local_potential_magnitude:np.ndarray,
+    E_F:float,
+    U_fluc:float,
+) ->np.ndarray:
+    """
+    Calculates and plots the scale factor for the given local potential.
+
+    Args:
+        energy (np.ndarray): 2D array of the energy values before applying the local potential
+        local_potential_position (np.ndarray): 2D array with a 1 at each point point if a local potential is being applied there and a 0 if it isn't. Should be identical in shape to energy.
+        local_potential_magnitude (np.ndarray): 1D array of the magnitude of the local potential at each time step
+        E_F (float): Fermi energy.
+        U_fluc (float): Energy fluctuation parameter.
+
+    Returns:
+        np.ndarray: the scale factor at each time step with plot.
+    """
     edge_lengths=[]
     for x in local_potential_magnitude:
         total_energy=energy+x*local_potential_position
