@@ -12,3 +12,4 @@ site/
 !docs/**/*.png
 !docs/**/*.jpg
 !docs/**/*.jpeg
+*.npy
