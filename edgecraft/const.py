@@ -37,6 +37,23 @@ m_GaAs = 0.067 * m_e
 k_B = 1.380649e-23
 """Boltzmann constant (J / K)."""
 
+n = 1e15        # m^-2
+
+B_0 = n * magnetic_flux_quantum
+"""Magnetic field strength (T)"""
+
+l=1.0
+"""Not sure what this is"""
+
+E_0 = e**2 / (4 * np.pi * dielectric_GaAs * l)
+"""Dielectric I think"""
+
+E_LL_diff = hbar * e * B_0 / (m_GaAs * E_0)
+"""Not sure what this is"""
+
+E_F = E_LL_diff / 2
+"""Fermi energy"""
+
 
 def calc_magnetic_length(B: float) -> float:
     """
