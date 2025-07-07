@@ -1,5 +1,5 @@
 import numpy as np
-
+import matplotlib.pyplot as plt
 
 def true_circle_in(
     Y: np.ndarray,
@@ -228,3 +228,13 @@ def find_local_potential_magnitude(desired_scale_factor: np.ndarray,E_F:float)->
         num=np.where(np.square( z -sf_new[time_step])==np.full_like( z, min(np.square( z - sf_new[time_step]))))[0][0]
         ret[time_step]=num*E_F/100
     return ret
+
+def test_local_potential_magnitude(energy:np.ndarray, local_potential_position:np.ndarray,local_potential_magnitude:np.ndarray,E_F:float,U_fluc:float) ->np.ndarray:
+    edge_lengths=[]
+    for x in local_potential_magnitude:
+        total_energy=energy+x*local_potential_position
+        edge_lengths.append(calc_edge_length(find_edge(total_energy,E_F,U_fluc,total_energy)))
+    scale_factor=calc_scale_factor(edge_lengths,edge_lengths[0])
+    plt.plot(scale_factor)
+    plt.show()
+    return scale_factor
