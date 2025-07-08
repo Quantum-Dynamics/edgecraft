@@ -91,7 +91,6 @@ edge_yWidth = []
 fig, axes = plt.subplots(1, 2)
 fig.set_size_inches(9, 4)
 cbar = None
-frames = 101
 #Literally E_F/100
 E_gate_step = (const.E_F) / (frames - 1)
 edge_yWidth = []
@@ -107,15 +106,15 @@ def plot_anim(index: int) -> None:
     axes[0].cla()
     axes[1].cla()
 
-    if index > 0:
-        energy = basic.apply_local_constant_potential(energy, E_gate_step, config.gate_indices)
+    e_new=np.copy(energy)
+    e_new = basic.apply_local_constant_potential(e_new, config.gate_potential[index], config.gate_indices)
 
-    edge = basic.find_edge(energy, const.E_F, const.U_fluc, config.bulk)
+    edge = basic.find_edge(e_new, const.E_F, const.U_fluc, config.bulk)
     
     #I deleted an index because I'm pretty sure it was wrong
     #Also I think this if statement is messing things up. How the animation works, it should run every time.
     #if len(edge_yWidth) == index:
-    edge_yWidth.append(len(np.where(basic.find_edge(energy, const.E_F, const.U_fluc, config.bulk)[len(x) // 2, :] == 1)))
+    edge_yWidth.append(len(np.where(basic.find_edge(e_new, const.E_F, const.U_fluc, config.bulk)[len(x) // 2, :] == 1)))
 
     # edge 2D plot
     cplot = axes[0].pcolor(
@@ -133,7 +132,7 @@ def plot_anim(index: int) -> None:
     # energy 1D plot
     axes[1].plot(
         y,
-        energy[len(x) // 2, :],
+        e_new[len(x) // 2, :],
         label="single electron energy",
     )
     axes[1].axhline(const.E_F, color="black", linestyle="dashed", label="$E_F$")
@@ -145,7 +144,19 @@ def plot_anim(index: int) -> None:
     axes[1].set_xlabel("$Y$  ($" + f"{const.M:d}" + " l_B$)")
     axes[1].set_ylabel("Energy  ($e^2 / 4 pi epsilon l_0$)")
     axes[1].legend(fontsize=12)
+anim = animation.FuncAnimation(fig, plot_anim, interval=len(config.gate_potential), frames=len(config.gate_potential))
+#Can't get the saving to work. It works fine in other PoC_copy.ipynb though.
+#anim.save(filename="PoC.gif", writer="pillow", dpi=300)
+
+dt=[]
+dt.append(basic.calculate_edge_length(basic.find_edge(energy,const.E_F,const.U_fluc,config.bulk)))
+for t in range (0,len(config.gate_potential)):
+    e_new=np.copy(energy)
+    e_new = basic.apply_local_constant_potential(e_new, config.gate_potential[t], config.gate_indices)
+    dt.append(basic.calculate_edge_length(basic.find_edge(e_new,const.E_F, const.U_fluc, config.bulk)))
+
+a=basic.calc_scale_factor(dt,dt[0])
+plt.plot(a)
 plt.show()
-anim = animation.FuncAnimation(fig, plot_anim, interval=100, frames=frames)
-anim.save(filename="PoC.gif", writer="pillow", dpi=300)
-plt.show()
+
+mag=basic.find_local_potential_magnitude(dt,a)
