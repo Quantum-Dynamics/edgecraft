@@ -189,3 +189,5 @@ for x in range(0,101):
 
 etchings=np.array([etched1,etched2,etched3,etched4,etched5,etched6,etched7,etched8,etched9])
 etching_potentials=np.array([U_etching1,U_etching2,U_etching3,U_etching4,U_etching5,U_etching6,U_etching7,U_etching8,U_etching9])
+
+desired_scale_factor=(np.cosh(np.arange(1,50,1)))**2

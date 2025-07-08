@@ -147,16 +147,30 @@ def plot_anim(index: int) -> None:
 anim = animation.FuncAnimation(fig, plot_anim, interval=len(config.gate_potential), frames=len(config.gate_potential))
 #Can't get the saving to work. It works fine in other PoC_copy.ipynb though.
 #anim.save(filename="PoC.gif", writer="pillow", dpi=300)
+plt.close()
 
 dt=[]
-dt.append(basic.calculate_edge_length(basic.find_edge(energy,const.E_F,const.U_fluc,config.bulk)))
-for t in range (0,len(config.gate_potential)):
-    e_new=np.copy(energy)
-    e_new = basic.apply_local_constant_potential(e_new, config.gate_potential[t], config.gate_indices)
-    dt.append(basic.calculate_edge_length(basic.find_edge(e_new,const.E_F, const.U_fluc, config.bulk)))
+e_new=np.copy(energy)
+for time_step in config.gate_potential:
+    e_new=basic.apply_local_constant_potential(e_new,time_step,config.gate_indices)
+    dt.append(basic.calc_edge_length(basic.find_edge(e_new,const.E_F,const.U_fluc,config.bulk)))
 
-a=basic.calc_scale_factor(dt,dt[0])
-plt.plot(a)
+plt.plot(dt)
+plt.title("lengths")
 plt.show()
 
-mag=basic.find_local_potential_magnitude(dt,a)
+scale_factor=basic.calc_scale_factor(dt,dt[0])
+plt.plot(scale_factor)
+plt.title("Scale factor calculated from edge lengths")
+plt.show()
+
+plt.plot(config.gate_potential)
+plt.title("gate_potential")
+plt.show()
+
+mag=basic.find_local_potential_magnitude(config.desired_scale_factor, scale_factor,config.gate_potential)
+plt.plot(mag)
+plt.title("Required local potential for inputted scale factor")
+plt.show()
+
+basic.test_local_potential_magnitude(energy, config.gate_indices, mag, config.bulk, const.E_F, const.U_fluc)

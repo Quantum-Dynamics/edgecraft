@@ -51,6 +51,11 @@ E_LL_diff = hbar * e * B_0 / (m_GaAs * E_0)
 E_F = E_LL_diff / 2
 E_QH = E_F / 2
 
+T = 40e-3
+U_thermal = k_B * T / E_0
+U_disorder = (60e-6 * e) / E_0
+U_fluc = U_disorder + U_thermal
+
 alpha = 1e3
 
 def calc_magnetic_length(B: float) -> float:

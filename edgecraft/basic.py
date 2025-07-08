@@ -1,5 +1,5 @@
 import numpy as np
-
+import matplotlib.pyplot as plt
 
 def true_circle_in(
     Y: np.ndarray,
@@ -218,3 +218,58 @@ def calc_scale_factor(
     if init_length <= 0:
         raise ValueError("Initial length must be positive and non-zero.")
     return edge_lengths / init_length
+
+
+def find_local_potential_magnitude(
+    desired_scale_factor: np.ndarray,
+    simulated_scale_factor:np.ndarray,
+    gate_potential:np.ndarray
+)->np.ndarray:
+    """
+    Calculate the required local potential magnitude for a scale factor closest to the desired scale factor
+
+    Args:
+        desired_scale_factor (np.ndarray): 1D array of scale factor at various time steps. Each element should satisfy .93<=scale_factor[t]<=1.
+        E_F (float): Fermi energy of the material
+
+    Returns:
+        np.ndarray: an array with the required local potential at each step.
+    """
+    ret=np.full_like(desired_scale_factor,0.0)
+    sf_new=desired_scale_factor/np.max(desired_scale_factor)
+    for time_step in range(0,len(desired_scale_factor)):
+        num=np.where(np.square( simulated_scale_factor -sf_new[time_step])==np.full_like( simulated_scale_factor, min(np.square( simulated_scale_factor - sf_new[time_step]))))[0][0]
+        ret[time_step]=gate_potential[num]
+    return ret
+
+
+def test_local_potential_magnitude(
+    energy:np.ndarray, 
+    gate_indices:np.ndarray,
+    local_potential_magnitude:np.ndarray,
+    bulk:np.ndarray,
+    E_F:float,
+    U_fluc:float,
+) ->np.ndarray:
+    """
+    Calculates and plots the scale factor for the given local potential.
+
+    Args:
+        energy (np.ndarray): 2D array of the energy values before applying the local potential
+        local_potential_position (np.ndarray): 2D array with a 1 at each point point if a local potential is being applied there and a 0 if it isn't. Should be identical in shape to energy.
+        local_potential_magnitude (np.ndarray): 1D array of the magnitude of the local potential at each time step
+        E_F (float): Fermi energy.
+        U_fluc (float): Energy fluctuation parameter.
+
+    Returns:
+        np.ndarray: the scale factor at each time step with plot.
+    """
+    edge_lengths=[]
+    for x in local_potential_magnitude:
+        energy=apply_local_constant_potential(energy,x,gate_indices)
+        edge_lengths.append(calc_edge_length(find_edge(energy,E_F,U_fluc,bulk)))
+    scale_factor=calc_scale_factor(edge_lengths,edge_lengths[0])
+    plt.plot(scale_factor)
+    plt.title("Scale factor from calculated potential")
+    plt.show()
+    return scale_factor
