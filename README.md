@@ -34,3 +34,5 @@
    - boundary_indices (np.ndarray): a 2d array. Contains coorinates of the edge of the chip
    - bulk_indices (np.ndarray): a 2D array. Contains coorinates of the bulk of the chip (that's not vaccum or boundary)
    - desired_scale_factor(np.ndarray): 1D array of the desired scale factor at various points in time. The simulation will output the voltage required for the desired scale factor at each corresponding point in time.
+   - gate_indices (np.ndarray): a 2D array/ Contains the coordinates of the gate for applying a time-dependent gate potential
+   - gate_potential (np.ndarray): a 1D array of the gate potential for each time step

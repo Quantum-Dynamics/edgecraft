@@ -1,6 +1,4 @@
 import click
-import matplotlib.pyplot as plt
-
 
 @click.argument('config',type=click.File('r'))
 @click.command()
@@ -15,6 +13,4 @@ def importer(config):
 if __name__ == '__main__':
     importer()
     
-
-
-# python hello.py func.py
+# python click_application.py sample_config.py
