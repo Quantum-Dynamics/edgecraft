@@ -41,8 +41,17 @@ M = 20
 """multiplier of magnetic length"""
 
 # Needs to be moved to config
+hbar = h / (2 * np.pi)
 n = 1e15        # m^-2
 B_0 = n * magnetic_flux_quantum / 1
+dielectric_vacuum = 8.8854e-12      # F/m
+dielectric_GaAs = 12.9 * dielectric_vacuum
+m_e = 9.109e-31     # kg
+m_GaAs = 0.067 * m_e
+k_B = 1.380649e-23
+T = 40e-3
+
+M = 20  # multiplier of magnetic length
 l_B = np.sqrt(h / (2 * np.pi * e * B_0))
 l = l_B * M
 

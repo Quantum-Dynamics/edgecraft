@@ -42,11 +42,11 @@ boundary_y = y[np.where(boundary == 1)[1]]
 boundary_x = x[np.where(boundary == 1)[0]]
 boundary_indices = np.array(np.where(boundary == 1)).T
 
-bulk = np.copy(space_matrix)
+bulk = space_matrix.copy()
 bulk[boundary == 1] = 0
 bulk_indices = np.array(np.where(bulk == 1)).T
 
-vacuum = np.copy((~space_matrix.astype(bool)).astype(int))
+vacuum = ((~space_matrix.astype(bool)).astype(int)).copy()
 
 
 U_etching9 = 0.3
@@ -185,9 +185,9 @@ gate[boundary == 1] = 0
 gate_indices = np.array(np.where(gate == 1)).T
 gate_potential=[]
 for x in range(0,101):
-    gate_potential.append(x/(100*const.E_F))
+    gate_potential.append(const.E_F*x/100)
 
 etchings=np.array([etched1,etched2,etched3,etched4,etched5,etched6,etched7,etched8,etched9])
 etching_potentials=np.array([U_etching1,U_etching2,U_etching3,U_etching4,U_etching5,U_etching6,U_etching7,U_etching8,U_etching9])
 
-desired_scale_factor=(np.cosh(np.arange(1,50,1)))**2
+desired_scale_factor=(np.cos(np.arange(1,100,1)/400))**2

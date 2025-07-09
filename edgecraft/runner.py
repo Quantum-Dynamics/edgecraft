@@ -1,4 +1,4 @@
-print("running")
+print("running...")
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
@@ -14,8 +14,8 @@ energy = np.zeros_like(config.space_matrix, dtype=float)
 energy = basic.apply_QH_energy(energy, const.E_QH, config.bulk_indices)
 energy = basic.apply_confinement_potential(energy, config.bulk_indices, config.boundary_indices, const.alpha)
 
-fig, axis = plt.subplots()
-cplot = axis.pcolor(
+fig, axes = plt.subplots(1,2,figsize=(10, 4))
+cplot = axes[0].pcolor(
     y,
     x,
     energy,
@@ -23,34 +23,34 @@ cplot = axis.pcolor(
     shading="nearest",
 )
 cplot.set_clim(0, const.E_F * 3 / 2)
-axis.set_aspect("equal")
-axis.set_xlabel("$Y$  ($" + f"{const.M:d}" + " l_B$)")
-axis.set_ylabel("$X$  ($" + f"{const.M:d}" + " l_B$)")
+axes[0].set_aspect("equal")
+axes[0].set_xlabel("$Y$  ($" + f"{const.M:d}" + " l_B$)")
+axes[0].set_ylabel("$X$  ($" + f"{const.M:d}" + " l_B$)")
+axes[0].set_title("Potential before etching")
 fig.colorbar(cplot)
-plt.show()
 
-fig, axis = plt.subplots()
-axis.plot(
+axes[1].plot(
     y,
     energy[len(x) // 2, :],
     label="single electron energy",
 )
-axis.axhline(const.E_F, color="black", linestyle="dashed", label="$E_\mathrm{F}$")
-axis.hlines(2, 130, 130 + 10e-6 / const.l, color="black", linewidth=3)
-axis.text(120, 2.5, "10 $\mathrm{\mu m}$")
-axis.set_xlim(101)
-axis.set_ylim(0, const.E_F * 3 / 2)
-axis.set_xlabel("$Y$  ($" + f"{const.M:d}" + " l_B$)")
-axis.set_ylabel("Energy  ($e^2 / 4 \pi \epsilon l_0$)")
-axis.legend()
+axes[1].axhline(const.E_F, color="black", linestyle="dashed", label="$E_\mathrm{F}$")
+axes[1].hlines(2, 130, 130 + 10e-6 / const.l, color="black", linewidth=3)
+axes[1].text(120, 2.5, "10 $\mathrm{\mu m}$")
+axes[1].set_xlim(101)
+axes[1].set_ylim(0, const.E_F * 3 / 2)
+axes[1].set_xlabel("distance from material edge  ($" + f"{const.M:d}" + " l_B$)")
+axes[1].set_ylabel("Energy  ($e^2 / 4 \pi \epsilon l_0$)")
+axes[1].legend()
+axes[1].set_title("Potential profile before etching")
 plt.show()
 
 #Applying etchings
 for index in range(len(config.etchings)):
     energy=energy+config.etchings[index]*config.etching_potentials[index]
 
-fig, axis = plt.subplots()
-cplot = axis.pcolor(
+fig, axes = plt.subplots(1,2,figsize=(10, 4))
+cplot = axes[0].pcolor(
     y,
     x,
     energy,
@@ -58,28 +58,29 @@ cplot = axis.pcolor(
     shading="nearest",
 )
 cplot.set_clim(0, const.E_F * 3 / 2)
-axis.set_aspect("equal")
-axis.set_xlabel("$Y$  ($" + f"{const.M:d}" + " l_B$)")
-axis.set_ylabel("$X$  ($" + f"{const.M:d}" + " l_B$)")
+axes[0].set_aspect("equal")
+axes[0].set_xlabel("$Y$  ($" + f"{const.M:d}" + " l_B$)")
+axes[0].set_ylabel("$X$  ($" + f"{const.M:d}" + " l_B$)")
+axes[0].set_title("Potential after etching")
 fig.colorbar(cplot)
-plt.show()
 
-fig, axis = plt.subplots()
-axis.plot(
+axes[1].plot(
     y,
     energy[len(x) // 2, :],
     label="single electron energy",
 )
-axis.axhline(const.E_F, color="black", linestyle="dashed", label="$E_\mathrm{F}$")
-axis.hlines(2, 130, 130 + 10e-6 / const.l, color="black", linewidth=3)
-axis.text(120, 2.5, "10 $\mathrm{\mu m}$")
-axis.set_xlim(101)
-axis.set_ylim(0, const.E_F * 3 / 2)
-axis.set_xlabel("$Y$  ($" + f"{const.M:d}" + " l_B$)")
-axis.set_ylabel("Energy  ($e^2 / 4 \pi \epsilon l_0$)")
-axis.legend()
+axes[1].axhline(const.E_F, color="black", linestyle="dashed", label="$E_\mathrm{F}$")
+axes[1].hlines(2, 130, 130 + 10e-6 / const.l, color="black", linewidth=3)
+axes[1].text(120, 2.5, "10 $\mathrm{\mu m}$")
+axes[1].set_xlim(101)
+axes[1].set_ylim(0, const.E_F * 3 / 2)
+axes[1].set_xlabel("distance from material edge  ($" + f"{const.M:d}" + " l_B$)")
+axes[1].set_ylabel("Energy  ($e^2 / 4 \pi \epsilon l_0$)")
+axes[1].legend()
+axes[1].set_title("Potential profile after etching")
 plt.show()
 
+'''
 fig, axes = plt.subplots(1, 2)
 fig.set_size_inches(9, 4)
 cbar = None
@@ -106,7 +107,7 @@ def plot_anim(index: int) -> None:
     axes[0].cla()
     axes[1].cla()
 
-    e_new=np.copy(energy)
+    e_new=energy.copy()
     e_new = basic.apply_local_constant_potential(e_new, config.gate_potential[index], config.gate_indices)
 
     edge = basic.find_edge(e_new, const.E_F, const.U_fluc, config.bulk)
@@ -148,29 +149,25 @@ anim = animation.FuncAnimation(fig, plot_anim, interval=len(config.gate_potentia
 #Can't get the saving to work. It works fine in other PoC_copy.ipynb though.
 #anim.save(filename="PoC.gif", writer="pillow", dpi=300)
 plt.close()
+'''
 
-dt=[]
-e_new=np.copy(energy)
-for time_step in config.gate_potential:
-    e_new=basic.apply_local_constant_potential(e_new,time_step,config.gate_indices)
-    dt.append(basic.calc_edge_length(basic.find_edge(e_new,const.E_F,const.U_fluc,config.bulk)))
 
-plt.plot(dt)
-plt.title("lengths")
-plt.show()
-
-scale_factor=basic.calc_scale_factor(dt,dt[0])
+scale_factor=basic.test_local_potential_magnitude(energy, config.gate_indices, config.gate_potential, config.bulk, const.E_F, const.U_fluc)
 plt.plot(scale_factor)
 plt.title("Scale factor calculated from edge lengths")
 plt.show()
 
-plt.plot(config.gate_potential)
-plt.title("gate_potential")
-plt.show()
-
 mag=basic.find_local_potential_magnitude(config.desired_scale_factor, scale_factor,config.gate_potential)
-plt.plot(mag)
-plt.title("Required local potential for inputted scale factor")
+fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(10, 4)) # Adjust figsize as needed
+axes[0].plot(config.gate_potential)
+axes[0].set_title("configuration gate potential")
+axes[1].plot(mag)
+axes[1].set_title("required gate potential for desired scale factor")
 plt.show()
 
-basic.test_local_potential_magnitude(energy, config.gate_indices, mag, config.bulk, const.E_F, const.U_fluc)
+fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(10, 4)) # Adjust figsize as needed
+axes[0].plot(config.desired_scale_factor)
+axes[0].set_title("Desired scale factor")
+axes[1].plot(basic.test_local_potential_magnitude(energy, config.gate_indices, mag, config.bulk, const.E_F, const.U_fluc))
+axes[1].set_title("Scale factor calculated from required potential")
+plt.show()
