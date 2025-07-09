@@ -40,7 +40,7 @@ k_B = 1.380649e-23
 M = 20  
 """multiplier of magnetic length"""
 
-# Needs to be moved to config
+# Some of this needs to be moved to config
 hbar = h / (2 * np.pi)
 n = 1e15        # m^-2
 B_0 = n * magnetic_flux_quantum / 1
