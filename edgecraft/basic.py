@@ -271,3 +271,24 @@ def test_local_potential_magnitude(
         dt.append(calc_edge_length(find_edge(e_new,E_F,U_fluc,bulk)))
     scale_factor=calc_scale_factor(dt,dt[0])
     return scale_factor
+
+def calc_velocity(energy:np.ndarray, e:float,B:float)->np.ndarray:
+    grad=np.array(np.gradient(energy))/(e*B)
+    return np.sqrt(np.square(grad[0])+np.square(grad[1]))
+
+def calc_velocity_along_edge(energy:np.ndarray,e:float,B:float,edge)->np.ndarray:
+    centeredge = np.zeros(len(edge))
+    for index_1 in range(len(edge)):
+        if np.sum(edge[index_1]) == 0:
+            raise ValueError(
+                f"Row {index_1} has no edge points. Please check the edge array."
+            )
+         # Take the average of the edge points in this row
+        for index_2 in range(len(edge[index_1])):
+            centeredge[index_1] += index_2 * edge[index_1, index_2]
+        centeredge[index_1] /= np.sum(edge[index_1])
+    velocity_array=calc_velocity(energy,e,B)
+    velocity_along_edge=[]
+    for index in range(0,len(energy)):
+        velocity_along_edge.append(velocity_array[index][int(centeredge[index])])
+    return velocity_along_edge

@@ -45,6 +45,11 @@ axes[1].legend()
 axes[1].set_title("Potential profile before etching")
 plt.show()
 
+
+plt.plot(basic.calc_velocity_along_edge(energy, const.e,const.B_0,basic.find_edge(energy,const.E_F,const.U_fluc,config.bulk)))
+plt.title("Electron velocity along the edge")
+plt.show()
+
 #Applying etchings
 for index in range(len(config.etchings)):
     energy=energy+config.etchings[index]*config.etching_potentials[index]
@@ -80,6 +85,10 @@ axes[1].legend()
 axes[1].set_title("Potential profile after etching")
 plt.show()
 
+
+plt.plot(basic.calc_velocity_along_edge(energy, const.e,const.B_0,basic.find_edge(energy,const.E_F,const.U_fluc,config.bulk)))
+plt.title("Electron velocity along the edge")
+plt.show()
 '''
 fig, axes = plt.subplots(1, 2)
 fig.set_size_inches(9, 4)
