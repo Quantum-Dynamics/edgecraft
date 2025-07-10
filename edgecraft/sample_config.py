@@ -191,3 +191,7 @@ etchings=np.array([etched1,etched2,etched3,etched4,etched5,etched6,etched7,etche
 etching_potentials=np.array([U_etching1,U_etching2,U_etching3,U_etching4,U_etching5,U_etching6,U_etching7,U_etching8,U_etching9])
 
 desired_scale_factor=(np.cos(np.arange(1,100,1)/400))**2
+
+def convert_to_voltage(eff_potential: np.ndarray)->np.ndarray:
+    #This is a stub. Replace with your effective voltage-to-potential conversion
+    return eff_potential
