@@ -192,3 +192,4 @@ with open("results.txt",'w') as f:
     f.write("\n")
     f.write("Scale factor after applying required potential:\n")
     f.write(str(basic.test_local_potential_magnitude(energy, config.gate_indices, mag, config.bulk, const.E_F, const.U_fluc)))
+print("Finished!")
