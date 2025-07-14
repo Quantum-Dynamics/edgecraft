@@ -101,7 +101,7 @@ def apply_local_constant_potential(
 
 def apply_QH_energy(
     energy: np.ndarray,
-    QH_energy: np.ndarray,
+    QH_energy: float,
     bulk_indices: np.ndarray,
 ) -> np.ndarray:
     """
@@ -110,7 +110,7 @@ def apply_QH_energy(
 
     Args:
         energy (np.ndarray): 2D array of energy values to modify.
-        QH_energy (np.ndarray): Value to add at each bulk index.
+        QH_energy (float): Value to add at each bulk index.
         bulk_indices (np.ndarray): 2D array of bulk point coordinates.
 
     Returns:
@@ -251,12 +251,12 @@ def test_local_potential_magnitude(
     U_fluc:float,
 ) ->np.ndarray:
     """
-    Calculates and plots the scale factor for the given local potential.
+    Calculates the scale factor for the given local potential.
 
     Args:
         energy (np.ndarray): 2D array of the energy values before applying the local potential
-        local_potential_position (np.ndarray): 2D array with a 1 at each point point if a local potential is being applied there and a 0 if it isn't. Should be identical in shape to energy.
-        local_potential_magnitude (np.ndarray): 1D array of the magnitude of the local potential at each time step
+        gate_indices (np.ndarray): 2D array with a 1 at each point point if a local potential is being applied there and a 0 if it isn't. Should be identical in shape to energy.
+        gate_potential (np.ndarray): 1D array of the magnitude of the local potential at each time step. Magnitude of local potential is assumed to be uniform across space.
         bulk (np.ndarray): 2D array of the same shape as energy. Has a 1 where the point is in the bulk region and a 0 elsewhere.
         E_F (float): Fermi energy.
         U_fluc (float): Energy fluctuation parameter.
@@ -272,11 +272,42 @@ def test_local_potential_magnitude(
     scale_factor=calc_scale_factor(dt,dt[0])
     return scale_factor
 
-def calc_velocity(energy:np.ndarray, e:float,B:float)->np.ndarray:
+def calc_velocity(
+    energy:np.ndarray,
+    e:float,B:float
+)->np.ndarray:
+    """
+    Calculates the velocity at every point.
+
+    Args:
+        energy (np.ndarray): 2D array of the energy values before applying the local potential
+        e (float): elementary charge
+        B (float): Magnitude of perpendicular magnetic field
+
+    Returns:
+        np.ndarray: an array of the same shape as energy with the velocities at each coordinate.
+    """
     grad=np.array(np.gradient(energy))/(e*B)
     return np.sqrt(np.square(grad[0])+np.square(grad[1]))
 
-def calc_velocity_along_edge(energy:np.ndarray,e:float,B:float,edge)->np.ndarray:
+def calc_velocity_along_edge(
+    energy:np.ndarray,
+    e:float,
+    B:float,
+    edge
+)->np.ndarray:
+    """
+    Calculates the velocity at each edge point.
+
+    Args:
+        energy (np.ndarray): 2D array of the energy values before applying the local potential
+        e (float): elementary charge
+        B (float): Magnitude of perpendicular magnetic field
+        edge (np.ndarray): 2D array with a 1 at each point if it is in the edge and a 0 if it isn't. Same shape as energy
+
+    Returns:
+        np.ndarray: velocity at the edge at each y-coordinate.
+    """
     centeredge = np.zeros(len(edge))
     for index_1 in range(len(edge)):
         if np.sum(edge[index_1]) == 0:

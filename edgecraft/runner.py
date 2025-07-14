@@ -14,7 +14,7 @@ energy = np.zeros_like(config.space_matrix, dtype=float)
 energy = basic.apply_QH_energy(energy, const.E_QH, config.bulk_indices)
 energy = basic.apply_confinement_potential(energy, config.bulk_indices, config.boundary_indices, const.alpha)
 
-fig, axes = plt.subplots(1,2,figsize=(10, 4))
+fig, axes = plt.subplots(1,3,figsize=(15, 4))
 cplot = axes[0].pcolor(
     y,
     x,
@@ -43,18 +43,18 @@ axes[1].set_xlabel("distance from material edge  ($" + f"{const.M:d}" + " l_B$)"
 axes[1].set_ylabel("Energy  ($e^2 / 4 \pi \epsilon l_0$)")
 axes[1].legend()
 axes[1].set_title("Potential profile before etching")
-plt.show()
 
-
-plt.plot(basic.calc_velocity_along_edge(energy, const.e,const.B_0,basic.find_edge(energy,const.E_F,const.U_fluc,config.bulk)))
-plt.title("Electron velocity along the edge")
+axes[2].plot(basic.calc_velocity_along_edge(energy, const.e,const.B_0,basic.find_edge(energy,const.E_F,const.U_fluc,config.bulk)))
+axes[2].set_title("Electron velocity along the edge before etching")
+axes[2].set_ylabel("velocity")
+axes[2].set_xlabel("y-position")
 plt.show()
 
 #Applying etchings
 for index in range(len(config.etchings)):
     energy=energy+config.etchings[index]*config.etching_potentials[index]
 
-fig, axes = plt.subplots(1,2,figsize=(10, 4))
+fig, axes = plt.subplots(1,3,figsize=(15, 4))
 cplot = axes[0].pcolor(
     y,
     x,
@@ -80,27 +80,19 @@ axes[1].text(120, 2.5, "10 $\mathrm{\mu m}$")
 axes[1].set_xlim(101)
 axes[1].set_ylim(0, const.E_F * 3 / 2)
 axes[1].set_xlabel("distance from material edge  ($" + f"{const.M:d}" + " l_B$)")
-axes[1].set_ylabel("Energy  ($e^2 / 4 \pi \epsilon l_0$)")
 axes[1].legend()
 axes[1].set_title("Potential profile after etching")
+
+axes[2].plot(basic.calc_velocity_along_edge(energy, const.e,const.B_0,basic.find_edge(energy,const.E_F,const.U_fluc,config.bulk)))
+axes[2].set_title("Electron velocity along the edge after etching")
+axes[2].set_ylabel("velocity")
+axes[2].set_xlabel("y-position")
 plt.show()
 
-
-plt.plot(basic.calc_velocity_along_edge(energy, const.e,const.B_0,basic.find_edge(energy,const.E_F,const.U_fluc,config.bulk)))
-plt.title("Electron velocity along the edge")
-plt.show()
-'''
-fig, axes = plt.subplots(1, 2)
-fig.set_size_inches(9, 4)
+fig, axes = plt.subplots(1, 3)
+fig.set_size_inches(14, 4)
 cbar = None
 frames = 101
-#Literally E_F/100
-E_gate_step = (const.E_F) / (frames - 1)
-edge_yWidth = []
-
-fig, axes = plt.subplots(1, 2)
-fig.set_size_inches(9, 4)
-cbar = None
 #Literally E_F/100
 E_gate_step = (const.E_F) / (frames - 1)
 edge_yWidth = []
@@ -154,11 +146,16 @@ def plot_anim(index: int) -> None:
     axes[1].set_xlabel("$Y$  ($" + f"{const.M:d}" + " l_B$)")
     axes[1].set_ylabel("Energy  ($e^2 / 4 pi epsilon l_0$)")
     axes[1].legend(fontsize=12)
-anim = animation.FuncAnimation(fig, plot_anim, interval=len(config.gate_potential), frames=len(config.gate_potential))
+
+    axes[2].plot(basic.calc_velocity_along_edge(e_new, const.e,const.B_0,basic.find_edge(energy,const.E_F,const.U_fluc,config.bulk)),color='blue')
+    axes[2].set_title("Electron velocity along the edge")
+    axes[2].set_ylabel("velocity")
+    axes[2].set_xlabel("y-position")
+    axes[2].set_ylim(0,10e18)
+ani = animation.FuncAnimation(fig, plot_anim, interval=len(config.gate_potential), frames=len(config.gate_potential))
 #Can't get the saving to work. It works fine in other PoC_copy.ipynb though.
-#anim.save(filename="PoC.gif", writer="pillow", dpi=300)
+ani.save(filename='PoC.gif', writer='pillow', dpi=300)
 plt.close()
-'''
 
 
 scale_factor=basic.test_local_potential_magnitude(energy, config.gate_indices, config.gate_potential, config.bulk, const.E_F, const.U_fluc)
