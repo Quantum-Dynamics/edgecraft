@@ -2,8 +2,11 @@ import click
 
 @click.argument('config',type=click.File('r'))
 @click.option('--const',type=click.File('r'),default=None)
+@click.option('--energy_graphs',type=bool,default=True)
+@click.option('--anim',type=bool, default=True)
+@click.option('--scale_factor',type=bool, default=True)
 @click.command()
-def importer(config,const=None):
+def importer(config,const=None,energy_graphs=True, anim=True,scale_factor=True):
     content=config.read()
     output="user_configuration.py"
     f=open(output, 'w',encoding='utf-8')
@@ -16,8 +19,9 @@ def importer(config,const=None):
         f.write(content)
         f.close()
     import runner
+    runner.run(energy_graphs,anim,scale_factor)
     
 if __name__ == '__main__':
     importer()
     
-# python click_application.py sample_config.py
+# python click_application.py sample_config.py --energy_graphs=True --anim=True --scale_factor=True
