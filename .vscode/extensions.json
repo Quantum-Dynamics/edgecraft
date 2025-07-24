@@ -1,0 +1,16 @@
+{
+    "recommendations": [
+        "ms-python.python",
+        "ms-toolsai.jupyter",
+        "magicstack.MagicPython",
+        "ms-python.flake8",
+        "EditorConfig.EditorConfig",
+        "github.vscode-github-actions",
+        "donjayamanne.githistory",
+        "GitHub.copilot",
+        "GitHub.copilot-chat",
+        "GitHub.vscode-pull-request-github",
+        "VisualStudioExptTeam.vscodeintellicode",
+        "yzhang.markdown-all-in-one",
+    ]
+}
