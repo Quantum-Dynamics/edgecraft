@@ -1,5 +1,7 @@
 import numpy as np
 import const
+
+
 def true_circle_in(
     Y: np.ndarray,
     X: np.ndarray,
@@ -22,6 +24,7 @@ def true_circle_in(
             circle.
     """
     return (X - x0)**2 + (Y - y0)**2 <= radius**2
+
 
 radius_gate = int(50e-6 / const.l)
 
@@ -61,7 +64,8 @@ U_etching1 = U_etching2 + 0.3
 # shallow etching region 1
 etched1 = np.logical_xor(
     true_circle_in(Y, X, y[len(y) // 2], x[len(x) // 2], radius_gate),
-    true_circle_in(Y, X, y[len(y) // 2], x[len(x) // 2], radius_gate - int(5e-6 / const.l)),
+    true_circle_in(Y, X, y[len(y) // 2], x[len(x) // 2],
+                   radius_gate - int(5e-6 / const.l)),
 ).astype(int)
 etched1[Y >= y[len(y) // 2]] = 0
 etched1[boundary == 1] = 0
@@ -69,8 +73,10 @@ etched1_indices = np.array(np.where(etched1 == 1)).T
 
 # shallow etching region 2
 etched2 = np.logical_xor(
-    true_circle_in(Y, X, y[len(y) // 2], x[len(x) // 2], radius_gate - int(5e-6 / const.l)),
-    true_circle_in(Y, X, y[len(y) // 2], x[len(x) // 2], radius_gate - int(9e-6 / const.l)),
+    true_circle_in(Y, X, y[len(y) // 2], x[len(x) // 2],
+                   radius_gate - int(5e-6 / const.l)),
+    true_circle_in(Y, X, y[len(y) // 2], x[len(x) // 2],
+                   radius_gate - int(9e-6 / const.l)),
 ).astype(int)
 etched2[Y >= y[len(y) // 2]] = 0
 etched2[boundary == 1] = 0
@@ -79,8 +85,10 @@ etched2_indices = np.array(np.where(etched2 == 1)).T
 
 # shallow etching region 3
 etched3 = np.logical_xor(
-    true_circle_in(Y, X, y[len(y) // 2], x[len(x) // 2], radius_gate - int(9e-6 / const.l)),
-    true_circle_in(Y, X, y[len(y) // 2], x[len(x) // 2], radius_gate - int(11e-6 / const.l)),
+    true_circle_in(Y, X, y[len(y) // 2], x[len(x) // 2],
+                   radius_gate - int(9e-6 / const.l)),
+    true_circle_in(Y, X, y[len(y) // 2], x[len(x) // 2],
+                   radius_gate - int(11e-6 / const.l)),
 ).astype(int)
 etched3[Y >= y[len(y) // 2]] = 0
 etched3[boundary == 1] = 0
@@ -90,8 +98,10 @@ etched3_indices = np.array(np.where(etched3 == 1)).T
 
 # shallow etching region 4
 etched4 = np.logical_xor(
-    true_circle_in(Y, X, y[len(y) // 2], x[len(x) // 2], radius_gate - int(11e-6 / const.l)),
-    true_circle_in(Y, X, y[len(y) // 2], x[len(x) // 2], radius_gate - int(13e-6 / const.l)),
+    true_circle_in(Y, X, y[len(y) // 2], x[len(x) // 2],
+                   radius_gate - int(11e-6 / const.l)),
+    true_circle_in(Y, X, y[len(y) // 2], x[len(x) // 2],
+                   radius_gate - int(13e-6 / const.l)),
 ).astype(int)
 etched4[Y >= y[len(y) // 2]] = 0
 etched4[boundary == 1] = 0
@@ -102,8 +112,10 @@ etched4_indices = np.array(np.where(etched4 == 1)).T
 
 # shallow etching region 5
 etched5 = np.logical_xor(
-    true_circle_in(Y, X, y[len(y) // 2], x[len(x) // 2], radius_gate - int(13e-6 / const.l)),
-    true_circle_in(Y, X, y[len(y) // 2], x[len(x) // 2], radius_gate - int(15e-6 / const.l)),
+    true_circle_in(Y, X, y[len(y) // 2], x[len(x) // 2],
+                   radius_gate - int(13e-6 / const.l)),
+    true_circle_in(Y, X, y[len(y) // 2], x[len(x) // 2],
+                   radius_gate - int(15e-6 / const.l)),
 ).astype(int)
 etched5[Y >= y[len(y) // 2]] = 0
 etched5[boundary == 1] = 0
@@ -115,8 +127,10 @@ etched5_indices = np.array(np.where(etched5 == 1)).T
 
 # shallow etching region 6
 etched6 = np.logical_xor(
-    true_circle_in(Y, X, y[len(y) // 2], x[len(x) // 2], radius_gate - int(15e-6 / const.l)),
-    true_circle_in(Y, X, y[len(y) // 2], x[len(x) // 2], radius_gate - int(17e-6 / const.l)),
+    true_circle_in(Y, X, y[len(y) // 2], x[len(x) // 2],
+                   radius_gate - int(15e-6 / const.l)),
+    true_circle_in(Y, X, y[len(y) // 2], x[len(x) // 2],
+                   radius_gate - int(17e-6 / const.l)),
 ).astype(int)
 etched6[Y >= y[len(y) // 2]] = 0
 etched6[boundary == 1] = 0
@@ -129,8 +143,10 @@ etched6_indices = np.array(np.where(etched6 == 1)).T
 
 # shallow etching region 7
 etched7 = np.logical_xor(
-    true_circle_in(Y, X, y[len(y) // 2], x[len(x) // 2], radius_gate - int(17e-6 / const.l)),
-    true_circle_in(Y, X, y[len(y) // 2], x[len(x) // 2], radius_gate - int(19e-6 / const.l)),
+    true_circle_in(Y, X, y[len(y) // 2], x[len(x) // 2],
+                   radius_gate - int(17e-6 / const.l)),
+    true_circle_in(Y, X, y[len(y) // 2], x[len(x) // 2],
+                   radius_gate - int(19e-6 / const.l)),
 ).astype(int)
 etched7[Y >= y[len(y) // 2]] = 0
 etched7[boundary == 1] = 0
@@ -144,8 +160,10 @@ etched7_indices = np.array(np.where(etched7 == 1)).T
 
 # shallow etching region 8
 etched8 = np.logical_xor(
-    true_circle_in(Y, X, y[len(y) // 2], x[len(x) // 2], radius_gate - int(19e-6 / const.l)),
-    true_circle_in(Y, X, y[len(y) // 2], x[len(x) // 2], radius_gate - int(21e-6 / const.l)),
+    true_circle_in(Y, X, y[len(y) // 2], x[len(x) // 2],
+                   radius_gate - int(19e-6 / const.l)),
+    true_circle_in(Y, X, y[len(y) // 2], x[len(x) // 2],
+                   radius_gate - int(21e-6 / const.l)),
 ).astype(int)
 etched8[Y >= y[len(y) // 2]] = 0
 etched8[boundary == 1] = 0
@@ -160,8 +178,10 @@ etched8_indices = np.array(np.where(etched8 == 1)).T
 
 # shallow etching region 9
 etched9 = np.logical_xor(
-    true_circle_in(Y, X, y[len(y) // 2], x[len(x) // 2], radius_gate - int(21e-6 / const.l)),
-    true_circle_in(Y, X, y[len(y) // 2], x[len(x) // 2], radius_gate - int(23e-6 / const.l)),
+    true_circle_in(Y, X, y[len(y) // 2], x[len(x) // 2],
+                   radius_gate - int(21e-6 / const.l)),
+    true_circle_in(Y, X, y[len(y) // 2], x[len(x) // 2],
+                   radius_gate - int(23e-6 / const.l)),
 ).astype(int)
 etched9[Y >= y[len(y) // 2]] = 0
 etched9[boundary == 1] = 0
@@ -177,22 +197,28 @@ etched9_indices = np.array(np.where(etched9 == 1)).T
 
 # expansion gate
 gate = np.logical_xor(
-    true_circle_in(Y, X, y[len(y) // 2], x[len(x) // 2], radius_gate),
-    true_circle_in(Y, X, y[len(y) // 2], x[len(x) // 2], radius_gate - int(25e-6 / const.l)),
+    true_circle_in(Y, X, y[len(y) // 2], x[len(x) // 2],
+                   radius_gate),
+    true_circle_in(Y, X, y[len(y) // 2], x[len(x) // 2],
+                   radius_gate - int(25e-6 / const.l)),
 ).astype(int)
 gate[Y >= y[len(y) // 2]] = 0
 gate[boundary == 1] = 0
 gate_indices = np.array(np.where(gate == 1)).T
-gate_potential=[]
-for x in range(0,101):
-    gate_potential.append(const.E_F*x/100)
+gate_potential = []
+for x in range(0, 101):
+    gate_potential.append(const.E_F * x / 100)
 
-etchings=np.array([etched1,etched2,etched3,etched4,etched5,etched6,etched7,etched8,etched9])
-etching_potentials=np.array([U_etching1,U_etching2,U_etching3,U_etching4,U_etching5,U_etching6,U_etching7,U_etching8,U_etching9])
+etchings = np.array([etched1, etched2, etched3, etched4,
+                     etched5, etched6, etched7, etched8, etched9])
+etching_potentials = np.array([U_etching1, U_etching2,
+                               U_etching3, U_etching4, U_etching5, U_etching6,
+                               U_etching7, U_etching8, U_etching9])
 
-desired_scale_factor=(np.cos(np.arange(1,100,1)/400))**2
-time_scale=10e-9
+desired_scale_factor = (np.cos(np.arange(1, 100, 1) / 400))**2
+time_scale = 10e-9
 
-def convert_to_voltage(eff_potential: np.ndarray)->np.ndarray:
-    #This is a stub. Replace with your effective voltage-to-potential conversion
+
+def convert_to_voltage(eff_potential: np.ndarray) -> np.ndarray:
+    # This is a stub. Replace with your voltage-to-potential conversion
     return eff_potential

@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.integrate import solve_ivp
 
+
 def true_circle_in(
     Y: np.ndarray,
     X: np.ndarray,
@@ -99,6 +100,7 @@ def apply_local_constant_potential(
         energy[x_gate, y_gate] += val
     return energy
 
+
 def apply_local_varying_potential(
     energy: np.ndarray,
     val: np.ndarray,
@@ -114,7 +116,7 @@ def apply_local_varying_potential(
     Returns:
         np.ndarray: The modified energy array.
     """
-    energy=energy+val
+    energy = energy + val
     return energy
 
 
@@ -176,15 +178,20 @@ def find_edge(
 
     return edge
 
-def find_center_edge(edge:np.ndarray)->np.ndarray:
+
+def find_center_edge(
+    edge: np.ndarray
+) -> np.ndarray:
     """
     Finds the center of the edge points at each y coordinate.
 
     Args:
-        edge (np.ndarray): 2D array with a 1 where a point is in the edge and a 0 elsewhere
+        edge (np.ndarray): 2D array with a 1 where a point is in the edge
+        and a 0 elsewhere
 
     Returns:
-        np.ndarray: the x coordinate (float) of the center of the edge for each y coordinate
+        np.ndarray: the x coordinate (float) of the center of the edge for
+        each y coordinate
     """
 
     centeredge = np.zeros(len(edge))
@@ -199,6 +206,7 @@ def find_center_edge(edge:np.ndarray)->np.ndarray:
             centeredge[y] += x * edge[y, x]
         centeredge[y] /= np.sum(edge[y])
     return centeredge
+
 
 def calc_edge_length(
     edge: np.ndarray,
@@ -253,67 +261,79 @@ def calc_scale_factor(
 
 def find_local_potential_magnitude(
     desired_scale_factor: np.ndarray,
-    simulated_scale_factor:np.ndarray,
-    gate_potential:np.ndarray
-)->np.ndarray:
+    simulated_scale_factor: np.ndarray,
+    gate_potential: np.ndarray
+) -> np.ndarray:
     """
-    Calculate the required local potential magnitude for a scale factor closest to the desired scale factor
+    Calculate the required local potential magnitude for a scale factor
+    closest to the desired scale factor
 
     Args:
-        desired_scale_factor (np.ndarray): 1D array of scale factor at various time steps. Each element should satisfy .93<=scale_factor[t]<=1.
+        desired_scale_factor (np.ndarray): 1D array of scale factor at various
+        time steps. Each element should satisfy .93< = scale_factor[t]< = 1.
         E_F (float): Fermi energy of the material
 
     Returns:
         np.ndarray: an array with the required local potential at each step.
     """
-    ret=np.full_like(desired_scale_factor,0.0)
-    sf_new=desired_scale_factor/np.max(desired_scale_factor)
-    for time_step in range(0,len(desired_scale_factor)):
-        num=np.where(np.square( simulated_scale_factor -sf_new[time_step])==np.full_like( simulated_scale_factor, min(np.square( simulated_scale_factor - sf_new[time_step]))))[0][0]
-        ret[time_step]=gate_potential[num]
+    ret = np.full_like(desired_scale_factor, 0.0)
+    sf_new = desired_scale_factor / np.max(desired_scale_factor)
+    for time_step in range(0, len(desired_scale_factor)):
+        num = np.where(np.square(simulated_scale_factor - sf_new[time_step]) ==
+                       np.full_like(simulated_scale_factor,
+                                    min(np.square(
+                                        simulated_scale_factor -
+                                        sf_new[time_step]))))[0][0]
+        ret[time_step] = gate_potential[num]
     return ret
 
 
 def test_local_potential_magnitude(
-    energy:np.ndarray, 
-    gate_indices:np.ndarray,
-    gate_potential:np.ndarray,
-    bulk:np.ndarray,
-    E_F:float,
-    U_fluc:float,
-) ->np.ndarray:
+    energy: np.ndarray,
+    gate_indices: np.ndarray,
+    gate_potential: np.ndarray,
+    bulk: np.ndarray,
+    E_F: float,
+    U_fluc: float,
+) -> np.ndarray:
     """
     Calculates and plots the scale factor for the given local potential.
 
     Args:
-        energy (np.ndarray): 2D array of the energy values before applying the local potential
-        gate (np.ndarray): 2D array of the relative gate magnitude. Should be identical in shape to energy.
-        local_potential_magnitude (np.ndarray): 1D array of the magnitude of the local potential at each time step
-        bulk (np.ndarray): 2D array of the same shape as energy. Has a 1 where the point is in the bulk region and a 0 elsewhere.
+        energy (np.ndarray): 2D array of the energy values before
+        applying the local potential
+        gate (np.ndarray): 2D array of the relative gate magnitude.
+        Should be identical in shape to energy.
+        local_potential_magnitude (np.ndarray): 1D array of the magnitude of
+        the local potential at each time step
+        bulk (np.ndarray): 2D array of the same shape as energy. Has a 1 where
+        the point is in the bulk region and a 0 elsewhere.
         E_F (float): Fermi energy.
         U_fluc (float): Energy fluctuation parameter.
 
     Returns:
         np.ndarray: the scale factor at each time step with plot.
     """
-    dt=[]
-    for time_step in range(0,len(gate_potential)):
-        e_new=energy.copy()
-        e_new=apply_local_constant_potential(e_new,gate_potential[time_step],gate_indices)
-        dt.append(calc_edge_length(find_edge(e_new,E_F,U_fluc,bulk)))
-    scale_factor=calc_scale_factor(dt,dt[0])
+    dt = []
+    for time_step in range(0, len(gate_potential)):
+        e_new = energy.copy()
+        e_new = apply_local_constant_potential(
+            e_new, gate_potential[time_step], gate_indices)
+        dt.append(calc_edge_length(find_edge(e_new, E_F, U_fluc, bulk)))
+    scale_factor = calc_scale_factor(dt, dt[0])
     return scale_factor
 
+
 def calc_velocity(
-    energy:np.ndarray,
-    e:float,
-    B:float,
-    E_scale:float =1.0,
-    pixel_x_width:float =1.0,
-    pixel_y_width:float =1,
-)->np.ndarray:
+    energy: np.ndarray,
+    e: float,
+    B: float,
+    E_scale: float = 1.0,
+    pixel_x_width: float = 1.0,
+    pixel_y_width: float = 1,
+) -> np.ndarray:
     """
-    Calculates the velocity of electrons at each point if they were to be moving along a QH edge.
+    Calculates the velocity of an electron at each point.
 
     Args:
         energy (np.ndarray): 2D array of energy values.
@@ -327,20 +347,22 @@ def calc_velocity(
         np.ndarray: 2D array with the velocity at each point.
     """
 
-    #Calculates SI velocity if SI units are inputted
-    grad=np.array(np.gradient(energy))/(e*B)
-    grad=grad*E_scale
-    return np.sqrt(np.square(grad[0]/pixel_y_width)+np.square(grad[1]/pixel_x_width))
+    # Calculates SI velocity if SI units are inputted
+    grad = np.array(np.gradient(energy)) / (e * B)
+    grad = grad * E_scale
+    return np.sqrt(np.square(grad[0] / pixel_y_width) + np.square(
+        grad[1] / pixel_x_width))
+
 
 def calc_velocity_along_edge(
-    energy:np.ndarray,
-    e:float,
-    B:float,
+    energy: np.ndarray,
+    e: float,
+    B: float,
     edge,
-    E_scale:float =1.0,
-    pixel_x_width:float =1,
-    pixel_y_width:float =1
-)->np.ndarray:
+    E_scale: float = 1.0,
+    pixel_x_width: float = 1,
+    pixel_y_width: float = 1
+) -> np.ndarray:
     """
     Calculates the velocity of electrons at the center of the edge
 
@@ -348,82 +370,97 @@ def calc_velocity_along_edge(
         energy (np.ndarray): 2D array of energy values.
         e (float): elementary charge
         B (float): magnitude of perpendicular magnetic field
-        edge (np.ndarray): 2D array with a 1 where a point is in the edge and a 0 elsewhere 
+        edge (np.ndarray): 2D array with a 1 where a point is in the edge
+        and a 0 elsewhere
         E_scale (float): energy scale. energy*E_scale should be in Joules
         pixel_x_width (float): width of pixels in the x direction
         pixel_y_width (float): width of pixels in the y direction
 
     Returns:
-        np.ndarray: 1D array of the velocity at the edge point at each y coordinate.
+        np.ndarray: 1D array of the velocity at the edge point at each y point.
     """
 
     centeredge = find_center_edge(edge)
-    velocity_array=calc_velocity(energy,e,B,E_scale,pixel_x_width,pixel_y_width)
-    velocity_along_edge=[]
-    for index in range(0,len(energy)):
-        velocity_along_edge.append(velocity_array[index][int(centeredge[index]+.5)])
+    velocity_array = calc_velocity(energy, e, B, E_scale,
+                                   pixel_x_width, pixel_y_width)
+    velocity_along_edge = []
+    for index in range(0, len(energy)):
+        velocity_along_edge.append(
+            velocity_array[index][int(centeredge[index] + .5)])
     return velocity_along_edge
 
+
 def calc_ds(
-    centeredge:np.ndarray,
-    pixel_x_width:float =1.0,
-    pixel_y_width:float=1.0,
-)->np.ndarray:
+    centeredge: np.ndarray,
+    pixel_x_width: float = 1.0,
+    pixel_y_width: float = 1.0,
+) -> np.ndarray:
     """
-    Calculates the marginal length of the edge at each point compared to the unit length of 1m in the y direction
+    Calculates the marginal length of the edge at each point compared to the
+    unit length of 1m in the y direction
 
     Args:
-        centeredge (np.ndarray): the x coordinate (float) of the center of the edge for each y coordinate
+        centeredge (np.ndarray): the x coordinate (float) of the center of the
+        edge for each y coordinate
         pixel_x_width (float): width of pixels in the x direction
         pixel_y_width (float): width of pixels in the y direction
 
     Returns:
-        np.ndarray: 1D array of the length to the next edge point at each y-coordinate.
+        np.ndarray: 1D array of the length to the next edge point
+        at each y-coordinate.
     """
     dx = (centeredge[:-1] - centeredge[1:]) * pixel_x_width
-    dy = np.full_like(dx,1.0)*pixel_y_width
+    dy = np.full_like(dx, 1.0) * pixel_y_width
 
     # since there's 1 less tangent line than pixels
-    dx=np.append(dx,0.0)
-    dy=np.append(dy,1.0)
+    dx = np.append(dx, 0.0)
+    dy = np.append(dy, 1.0)
 
     return np.sqrt(np.square(dx) + np.square(dy))
 
+
 def calc_time(
-    ds:np.ndarray,
-    tangent_velocity:np.ndarray,
-    time_scale:float=1, 
-    start_index:int=0,
-    end_index:int =None,
-)->float:
+    ds: np.ndarray,
+    tangent_velocity: np.ndarray,
+    time_scale: float = 1,
+    start_index: int = 0,
+    end_index: int = None,
+) -> float:
     """
-    Calculates the time it takes for an electron to travel from start_index to end_index while the gate voltage is being applied
+    Calculates the time it takes for an electron to travel from start_index to
+    end_index while the gate voltage is being applied
 
     Args:
         ds (np.ndarray): length from 1 y-coordinate to the next in the edge
         tangent_velocity (np.ndarray): velocity along the edge
-        time_scale (float=1): time between elements of gate_potential 
-        start_index (int=0): index the electron starts at
-        end_index (int =None): index the electron ends at
+        time_scale (float = 1): time between elements of gate_potential
+        start_index (int = 0): index the electron starts at
+        end_index (int = None): index the electron ends at
 
     Returns:
         float: the time it takes for the particle to get to end_index
     """
-    if(end_index==None):
-        end_index=len(ds[0])
-    #ds and velocity need to have the same length scale.
+    if end_index is None:
+        end_index = len(ds[0])
+    # ds and velocity need to have the same length scale.
     # Computes velocity. x is measured in pixels
-    def dxdt(t,x):
-        if (0<=x[0]<len(ds[0]) and 0<=t/time_scale<len(ds)):
-            return tangent_velocity[int(t/time_scale)][int(x[0])]/ds[int(t/time_scale)][int(x[0])]
-        elif(0<=x[0]<len(ds[0])):
-            return tangent_velocity[len(ds)-1][int(x[0])]/ds[len(ds)-1][int(x[0])]
+
+    def dxdt(t, x):
+        if (0 <= x[0] < len(ds[0]) and 0 <= t / time_scale < len(ds)):
+            time_step = int(t / time_scale)
+            pos = int(x[0])
+            return tangent_velocity[time_step][pos] / ds[time_step][pos]
+        elif (0 <= x[0] < len(ds[0])):
+            end = len(ds) - 1
+            return tangent_velocity[end][int(x[0])] / ds[end][int(x[0])]
         else:
             return 1
-    #Has a zero when x reaches the end pixel
-    def reached_end(t,x): 
-        return x[0]-end_index
-    reached_end.terminal=True
-    reached_end.direction=1
-    solution= solve_ivp(dxdt, [0,10*len(ds)*time_scale],[start_index],events=reached_end)
+    # Has a zero when x reaches the end pixel
+
+    def reached_end(t, x):
+        return x[0] - end_index
+    reached_end.terminal = True
+    reached_end.direction = 1
+    solution = solve_ivp(dxdt, [0, 10 * len(ds) * time_scale], [start_index],
+                         events=reached_end)
     return solution.t_events[0][0]

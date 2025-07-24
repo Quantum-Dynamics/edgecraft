@@ -37,7 +37,7 @@ m_GaAs = 0.067 * m_e
 k_B = 1.380649e-23
 """Boltzmann constant (J / K)."""
 
-M = 20  
+M = 20
 """multiplier of magnetic length"""
 
 # Some of this needs to be moved to config
@@ -53,9 +53,9 @@ T = 40e-3
 
 M = 20  # multiplier of magnetic length
 l_B = np.sqrt(h / (2 * np.pi * e * B_0))
-l = l_B * M
+unit_length = l_B * M
 
-E_0 = e**2 / (4 * np.pi * dielectric_GaAs * l)
+E_0 = e**2 / (4 * np.pi * dielectric_GaAs * unit_length)
 E_LL_diff = hbar * e * B_0 / (m_GaAs * E_0)
 E_F = E_LL_diff / 2
 E_QH = E_F / 2
@@ -66,6 +66,7 @@ U_disorder = (60e-6 * e) / E_0
 U_fluc = U_disorder + U_thermal
 
 alpha = 1e3
+
 
 def calc_magnetic_length(B: float) -> float:
     """
