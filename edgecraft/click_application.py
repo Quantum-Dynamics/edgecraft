@@ -6,13 +6,15 @@ import click
 @click.option('--energy_graphs', type=bool, default=True)
 @click.option('--anim', type=bool, default=True)
 @click.option('--scale_factor', type=bool, default=True)
+@click.option('--dynamics', type=bool, default=True)
 @click.command()
 def importer(
     config,
     const=None,
     energy_graphs=True,
     anim=True,
-    scale_factor=True
+    scale_factor=True,
+    dynamics=True,
 ):
     content = config.read()
     output = "user_configuration.py"
@@ -26,7 +28,7 @@ def importer(
         f.write(content)
         f.close()
     import runner
-    runner.run(energy_graphs, anim, scale_factor)
+    runner.run(energy_graphs, anim, scale_factor, dynamics)
 
 
 if __name__ == '__main__':
@@ -34,4 +36,4 @@ if __name__ == '__main__':
 
 # To run this script, use the command line:
 # python click_application.py sample_config.py
-# --energy_graphs=True --anim=True --scale_factor=True
+# --energy_graphs=True --anim=True --scale_factor=True --dynamics=True
