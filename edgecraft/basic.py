@@ -634,3 +634,63 @@ def calc_stretch_of_time(
             end_time=index * time_scale, pixel_x_width=pixel_x_width,
             pixel_y_width=pixel_y_width)
     return ret
+
+
+def find_local_potential_dynamic_magnitude(
+    energy: np.ndarray,
+    E_F: float,
+    gate: np.ndarray,
+    desired_scale_factor: np.ndarray,
+    gate_potential_step: float,
+    centeredge: np.ndarray,
+    ds: np.ndarray,
+    e: float,
+    B: float,
+    E_scale: float,
+    tangent_velocity: np.ndarray,
+    time_scale: float = 1,
+    start_index: int = 0,
+    pixel_x_width: float = 1,
+    pixel_y_width: float = 1,
+) -> np.ndarray:
+    """
+    Calculate the required local potential magnitude for a scale factor
+    closest to the desired scale factor
+
+    Args:
+        desired_scale_factor (np.ndarray): 1D array of scale factor at various
+        time steps. Each element should satisfy .93< = scale_factor[t]< = 1.
+        E_F (float): Fermi energy of the material
+
+    Returns:
+        np.ndarray: an array with the required local potential at each step.
+    """
+    ret = np.full_like(desired_scale_factor, 0.0)
+    # sf_new = desired_scale_factor / np.max(desired_scale_factor)
+    # This only works for strictly decreasing scale factors.
+    # Needs a revamp for increasing
+    ret[0] = 0
+    for index in range(0, len(ret) - 1):
+        centeredge[index] = find_center_edge(energy + ret[index] * gate, E_F)
+        centeredge[index + 1] = centeredge[index]
+        ds[index] = calc_ds(centeredge[index], pixel_x_width, pixel_y_width)
+        ds[index + 1] = ds[index]
+        tangent_velocity[index] = calc_velocity_along_edge(
+            energy + ret[index] * gate, e, B, E_F, E_scale,
+            pixel_x_width, pixel_x_width)
+        tangent_velocity[index + 1] = tangent_velocity[index]
+        position = calc_path(
+            ds, tangent_velocity, time_scale, start_index)[index]
+        centeredge[index + 1] = find_center_edge(
+            energy + (ret[index] + gate_potential_step) * gate, E_F)
+        ds[index + 1] = calc_ds(
+            centeredge[index + 1], pixel_x_width, pixel_y_width)
+        stretch = calc_stretch(
+            centeredge, ds, index, position, pixel_x_width, pixel_y_width)
+        req = desired_scale_factor[index + 1] / calc_electron_stretch(
+            centeredge, ds, tangent_velocity, time_scale, start_index,
+            index * time_scale, pixel_x_width=pixel_x_width,
+            pixel_y_width=pixel_y_width)
+        steps = np.log(req) / np.log(stretch)
+        ret[index + 1] = ret[index] + (steps) * gate_potential_step
+    return ret

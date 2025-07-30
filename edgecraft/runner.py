@@ -132,9 +132,9 @@ def show_energy_graphs():
     axes[2].set_xlabel("y-position")
     plt.show()
 
-    energy = basic.apply_local_constant_potential(
-        energy, config.gate_potential[len(config.gate_potential) // 2],
-        config.gate_indices)
+    energy = basic.apply_local_varying_potential(
+        energy,
+        config.gate_potential[len(config.gate_potential) // 2] * config.gate)
 
     fig, axes = plt.subplots(1, 3, figsize=(15, 4))
     cplot = axes[0].pcolor(
@@ -202,7 +202,7 @@ def make_animation() -> None:
         velocity.append(basic.calc_velocity_along_edge(
             e_new, const.e, const.B_0, const.E_F, const.E_0,
             const.unit_length, const.unit_length))
-    path = basic.calc_path(ds, velocity, config.time_scale, 350)
+    path = basic.calc_path(ds, velocity, config.time_scale, 400)
 
     def plot_anim(index: int) -> None:
         global cbar
@@ -225,6 +225,7 @@ def make_animation() -> None:
         # Calculates velocity in SI units
         edge_width.append(len(np.where(
             edge[len(edge) // 2] == np.full_like(edge[len(edge) // 2], 1))[0]))
+        print(edge_width[index])
 
         # edge 2D plot
         cplot = axes[0].pcolor(
@@ -281,7 +282,7 @@ def make_animation() -> None:
     print("Time it takes for wavepacket to travel along edge (seconds):")
     print(basic.calc_time(ds, velocity, config.time_scale))
     print("Max edge width: ",
-          np.max(edge_width) * const.unit_length * 10e6, "micrometers")
+          np.max(edge_width) * const.unit_length * 1e6, "micrometers")
 
 
 def show_scale_factor() -> None:
@@ -337,8 +338,8 @@ def show_dynamics() -> None:
     centeredge = []
     for index in range(len(config.gate_potential)):
         e_new = np.copy(energy)
-        e_new = basic.apply_local_constant_potential(
-            e_new, config.gate_potential[index], config.gate_indices)
+        e_new = basic.apply_local_varying_potential(
+            e_new, config.gate_potential[index] * config.gate)
 
         centeredge.append(basic.find_center_edge(e_new, const.E_F))
         ds.append(basic.calc_ds(
@@ -382,13 +383,61 @@ def show_dynamics() -> None:
     plt.title("stretch map")
     plt.show()
     print("path the electron takes:")
-    print(basic.calc_path(ds, velocity, config.time_scale, 350))
+    print(basic.calc_path(ds, velocity, config.time_scale, 400))
     print("Electron stretch: ")
     print(basic.calc_electron_stretch(
-        centeredge, ds, velocity, config.time_scale, start_index=250,
+        centeredge, ds, velocity, config.time_scale, start_index=400,
         pixel_x_width=const.unit_length, pixel_y_width=const.unit_length))
     plt.plot(basic.calc_stretch_of_time(
-        centeredge, ds, velocity, config.time_scale, start_index=250,
+        centeredge, ds, velocity, config.time_scale, start_index=400,
         pixel_x_width=const.unit_length, pixel_y_width=const.unit_length))
     plt.title("Electron stretch vs time")
+    plt.show()
+
+    mag = basic.find_local_potential_dynamic_magnitude(
+        energy, const.E_F, config.gate,
+        config.desired_scale_factor,
+        config.gate_potential[1] - config.gate_potential[0],
+        centeredge, ds, const.e, const.B_0, const.E_0, velocity,
+        config.time_scale, 400, const.unit_length, const.unit_length)
+
+    fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(10, 4))
+    # Adjust figsize as needed
+    axes[0].plot(config.gate_potential)
+    axes[0].set_title("configuration gate potential")
+    axes[1].plot(mag)
+    axes[1].set_title("required gate potential for desired scale factor")
+    plt.show()
+
+    ds = []
+    velocity = []
+    centeredge = []
+    for index in range(len(mag)):
+        e_new = np.copy(energy)
+        e_new = basic.apply_local_varying_potential(
+            e_new, mag[index] * config.gate)
+
+        centeredge.append(basic.find_center_edge(e_new, const.E_F))
+        ds.append(basic.calc_ds(
+            basic.find_center_edge(e_new, const.E_F),
+            const.unit_length, const.unit_length))
+
+        # Calculates velocity in SI units
+        velocity.append(basic.calc_velocity_along_edge(
+            e_new, const.e, const.B_0, const.E_F, const.E_0,
+            const.unit_length, const.unit_length))
+    stretch = []
+    for index in range(len(centeredge)):
+        stretch.append([])
+        for index2 in range(len(centeredge[0])):
+            stretch[index].append(basic.calc_stretch(
+                centeredge, ds, index, index2,
+                const.unit_length, const.unit_length))
+    fig, axes = plt.subplots(1, 2)
+    axes[0].plot(config.desired_scale_factor)
+    axes[0].set_title("Desired scale factor")
+    axes[1].plot(basic.calc_stretch_of_time(
+        centeredge, ds, velocity, config.time_scale, start_index=400,
+        pixel_x_width=const.unit_length, pixel_y_width=const.unit_length))
+    axes[1].set_title("Electron scale factor from required magnitude")
     plt.show()
