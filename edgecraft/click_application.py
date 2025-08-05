@@ -7,6 +7,7 @@ import click
 @click.option('--anim', type=bool, default=True)
 @click.option('--scale_factor', type=bool, default=True)
 @click.option('--dynamics', type=bool, default=True)
+@click.option('--pulse', type=bool, default=True)
 @click.command()
 def importer(
     config,
@@ -15,6 +16,7 @@ def importer(
     anim=True,
     scale_factor=True,
     dynamics=True,
+    pulse=True,
 ):
     content = config.read()
     output = "user_configuration.py"
@@ -28,7 +30,7 @@ def importer(
         f.write(content)
         f.close()
     import runner
-    runner.run(energy_graphs, anim, scale_factor, dynamics)
+    runner.run(energy_graphs, anim, scale_factor, dynamics, pulse)
 
 
 if __name__ == '__main__':

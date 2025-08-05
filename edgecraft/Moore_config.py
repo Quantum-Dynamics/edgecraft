@@ -248,11 +248,9 @@ def find_gate_potential(max_edge_width, B):
     return result[0], result[1], result[2], result[3]
 
 
-parabola = find_gate_potential(4, 3000)
+parabola = find_gate_potential(4, 60)
 a, b, c = parabola[0], parabola[1], parabola[2]
 metric = parabola[3]
-a, b, c = 0.006975305310829629, -0.5340581395474464, 26.76313591923621
-metric = 122.19903766403573
 
 
 for y_index in range(len(gate)):
@@ -272,6 +270,9 @@ etching_potentials = np.array([])
 
 desired_scale_factor = (np.cos(np.arange(1, 100, 1) / 400))**2
 time_scale = 10e-9
+start_index = len(space_matrix) // 2 - radius_gate * .8
+gate_start = len(space_matrix) // 2 - radius_gate
+gate_end = len(space_matrix) // 2 + radius_gate
 
 
 def convert_to_voltage(eff_potential: np.ndarray) -> np.ndarray:

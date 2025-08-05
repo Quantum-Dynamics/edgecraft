@@ -26,7 +26,7 @@ def true_circle_in(
     return (X - x0)**2 + (Y - y0)**2 <= radius**2
 
 
-radius_gate = int(20e-6 / const.unit_length)
+radius_gate = int(70e-6 / const.unit_length)
 
 x = np.arange(0, int(200e-6 / const.unit_length), 1)
 y = np.arange(0, int(150e-6 / const.unit_length), 1)
@@ -207,13 +207,16 @@ gate[boundary == 1] = 0
 gate_indices = np.array(np.where(gate == 1)).T
 gate_potential = []
 for x in range(0, 101):
-    gate_potential.append(const.E_F * x / 300)
+    gate_potential.append(const.E_F * (100 - x) / 300)
 
 etchings = []
 etching_potentials = np.array([])
 
-desired_scale_factor = (np.cos(np.arange(1, 100, 1) / 300))**2
+desired_scale_factor = (np.exp(np.arange(1, 100, 1) / 50000))
 time_scale = .5e-9
+start_index = len(space_matrix) // 2 - radius_gate * .8
+gate_start = len(space_matrix) // 2 - radius_gate
+gate_end = len(space_matrix) // 2 + radius_gate
 
 
 def convert_to_voltage(eff_potential: np.ndarray) -> np.ndarray:

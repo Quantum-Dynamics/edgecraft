@@ -30,7 +30,7 @@ def true_circle_in(
 def calc_confinement_potential_at(
     bulk_index: np.ndarray,
     boundary_indices: np.ndarray,
-    dl: float = 1,
+    dl: float = .02,
 ) -> float:
     """
     Calculate the confinement potential at a given bulk index due to all
@@ -196,12 +196,17 @@ def find_center_edge(
     """
 
     centeredge = np.zeros(len(energy))
-
     for y in range(len(centeredge)):
         for x in range(len(energy[0]) - 1):
             if (energy[y][x + 1] < E_F < energy[y][x]):
-                E_diff = energy[y][x + 1] - energy[y][x]
-                centeredge[y] = x + (E_F - energy[y][x]) / E_diff
+                poly = np.polyfit(
+                    [x - 1, x, x + 1, x + 2],
+                    [energy[y][x - 1], energy[y][x],
+                     energy[y][x + 1], energy[y][x + 2]], 3)
+                poly[len(poly) - 1] -= E_F
+                roots = np.roots(poly)
+                root = np.min(np.abs(roots - np.full_like(roots, x)))
+                centeredge[y] = root + x
                 break
     return centeredge
 
@@ -211,6 +216,8 @@ def calc_edge_length(
     E_F: float,
     pixel_x: float = 1.0,
     pixel_y: float = 1.0,
+    region_start: int = 0,
+    region_end: int = None,
 ) -> float:
     """
     Calculate the total length of the edge by connecting edge points row by
@@ -223,14 +230,21 @@ def calc_edge_length(
             Defaults to 1.
         pixel_y (int, optional): Size of a pixel in the y-direction.
             Defaults to 1.
+        region_start (int = 1, optional): index to start calculating
+            edge length from
+        region_end (int = None, optional): index to end calculating
+            edge length from
 
     Returns:
         float: The calculated edge length.
     """
+    if region_end is None:
+        region_end = len(energy) - 1
     # At each row, find all the pixels that are in the edge
     centeredge = find_center_edge(energy, E_F)
 
-    dx = (centeredge[:-1] - centeredge[1:]) * pixel_x
+    dx = centeredge[region_start:region_end - 1] * pixel_x
+    dx -= centeredge[region_start + 1:region_end] * pixel_x
     dy = pixel_y
 
     # since there's 1 less tangent line than pixels
@@ -270,7 +284,9 @@ def find_local_potential_magnitude(
 
     Args:
         desired_scale_factor (np.ndarray): 1D array of scale factor at various
-        time steps. Each element should satisfy .93< = scale_factor[t]< = 1.
+            time steps.
+        simulated_scale_factor (np.ndarray): The scale factor obtained by
+            applying a simple gate voltage
         E_F (float): Fermi energy of the material
 
     Returns:
@@ -278,11 +294,12 @@ def find_local_potential_magnitude(
     """
     ret = np.full_like(desired_scale_factor, 0.0)
     sf_new = desired_scale_factor / np.max(desired_scale_factor)
+    simulated_new = simulated_scale_factor / np.max(simulated_scale_factor)
     for time_step in range(0, len(desired_scale_factor)):
-        num = np.where(np.square(simulated_scale_factor - sf_new[time_step]) ==
-                       np.full_like(simulated_scale_factor,
+        num = np.where(np.square(simulated_new - sf_new[time_step]) ==
+                       np.full_like(simulated_new,
                                     min(np.square(
-                                        simulated_scale_factor -
+                                        simulated_new -
                                         sf_new[time_step]))))[0][0]
         ret[time_step] = gate_potential[num]
     return ret
@@ -290,11 +307,11 @@ def find_local_potential_magnitude(
 
 def test_local_potential_magnitude(
     energy: np.ndarray,
-    gate_indices: np.ndarray,
+    gate: np.ndarray,
     gate_potential: np.ndarray,
-    bulk: np.ndarray,
     E_F: float,
-    U_fluc: float,
+    expanding_region_start: int,
+    expanding_region_end: int,
 ) -> np.ndarray:
     """
     Calculates and plots the scale factor for the given local potential.
@@ -312,15 +329,16 @@ def test_local_potential_magnitude(
         U_fluc (float): Energy fluctuation parameter.
 
     Returns:
-        np.ndarray: the scale factor at each time step with plot.
+        np.ndarray: the scale factor at each time step.
     """
-    dt = []
+    edge_length = []
     for time_step in range(0, len(gate_potential)):
         e_new = energy.copy()
-        e_new = apply_local_constant_potential(
-            e_new, gate_potential[time_step], gate_indices)
-        dt.append(calc_edge_length(e_new, E_F, ))
-    scale_factor = calc_scale_factor(dt, dt[0])
+        e_new = apply_local_varying_potential(
+            e_new, gate_potential[time_step] * gate)
+        edge_length.append(calc_edge_length(
+            e_new, E_F, 1, 1, expanding_region_start, expanding_region_end))
+    scale_factor = calc_scale_factor(edge_length, edge_length[0])
     return scale_factor
 
 
@@ -337,11 +355,11 @@ def calc_velocity(
 
     Args:
         energy (np.ndarray): 2D array of energy values.
-        e (float): elementary charge
-        B (float): magnitude of perpendicular magnetic field
-        E_scale (float): energy scale. energy*E_scale should be in Joules
-        pixel_x_width (float): width of pixels in the x direction
-        pixel_y_width (float): width of pixels in the y direction
+        e (float): elementary charge.
+        B (float): magnitude of perpendicular magnetic field.
+        E_scale (float): energy scale. energy * E_scale should be in Joules.
+        pixel_x_width (float): width of pixels in the x direction.
+        pixel_y_width (float): width of pixels in the y direction.
 
     Returns:
         np.ndarray: 2D array with the velocity at each point.
@@ -371,8 +389,7 @@ def calc_velocity_along_edge(
         e (float): elementary charge
         B (float): magnitude of perpendicular magnetic field
         E_F (float): Fermi energy.
-        and a 0 elsewhere
-        E_scale (float): energy scale. energy*E_scale should be in Joules
+        E_scale (float): energy scale. energy * E_scale should be in Joules
         pixel_x_width (float): width of pixels in the x direction
         pixel_y_width (float): width of pixels in the y direction
 
@@ -385,8 +402,12 @@ def calc_velocity_along_edge(
                                    pixel_x_width, pixel_y_width)
     velocity_along_edge = []
     for index in range(0, len(energy)):
-        velocity_along_edge.append(
-            velocity_array[index][int(centeredge[index] + .5)])
+        velocity1 = velocity_array[index][int(centeredge[index])]
+        velocity1 *= 1 - centeredge[index] + int(centeredge[index])
+        velocity2 = velocity_array[index][int(np.ceil(centeredge[index]))]
+        velocity2 *= 1 - centeredge[index] + np.ceil(centeredge[index])
+        velocity = velocity1 + velocity2 - centeredge[index].is_integer()
+        velocity_along_edge.append(velocity)
     return velocity_along_edge
 
 
@@ -397,13 +418,13 @@ def calc_ds(
 ) -> np.ndarray:
     """
     Calculates the marginal length of the edge at each point compared to the
-    unit length of 1m in the y direction
+        unit length of 1m in the y direction.
 
     Args:
         centeredge (np.ndarray): the x coordinate (float) of the center of the
-        edge for each y coordinate
-        pixel_x_width (float): width of pixels in the x direction
-        pixel_y_width (float): width of pixels in the y direction
+        edge for each y coordinate.
+        pixel_x_width (float): width of pixels in the x direction.
+        pixel_y_width (float): width of pixels in the y direction.
 
     Returns:
         np.ndarray: 1D array of the length to the next edge point
@@ -466,7 +487,7 @@ def calc_time(
     if (len(solution.t_events[0]) > 0):
         return solution.t_events[0][0]
     else:
-        print("Something's not right. The electron doesn't reach the end")
+        print("Something's not right. The electron doesn't reach the end.")
         return
 
 
@@ -506,7 +527,7 @@ def calc_path(
     return solution.y[0]
 
 
-def calc_stretch(
+def precise_stretch(
     centeredge: np.ndarray,
     ds: np.ndarray,
     time_step: float,
@@ -514,6 +535,23 @@ def calc_stretch(
     pixel_x_width: float = 1,
     pixel_y_width: float = 1,
 ) -> float:
+    """
+    Calculates the relative expansion at a point in time and space space
+        if 1 time step passes.
+
+    Args:
+        centeredge (np.ndarray): position of the center of the edge
+            at each time step.
+        ds (np.ndarray): length from 1 y-coordinate to the next in the edge
+        time_step (float): point in time to calculate expansion.
+        position (float): y coordinate to calculate expansion at.
+        pixel_x_width (float): width of pixels in the x direction
+        pixel_y_width (float): width of pixels in the y direction
+
+    Returns:
+        float: ratio of edge length 1 time step later to initial
+            edge length at position and time_step.
+    """
     t = int(time_step)
     y = int(position)
     # calculates the propotion of edge length change at a given x,y coordinate
@@ -551,6 +589,49 @@ def calc_stretch(
     return final_length / init_length
 
 
+def calc_stretch(
+    centeredge: np.ndarray,
+    ds: np.ndarray,
+    time_step: float,
+    position: float,
+    pixel_x_width: float = 1,
+    pixel_y_width: float = 1,
+    precision: int = 5
+) -> float:
+    """
+    Calculates the relative expansion at a point in time and space space
+        if 1 time step passes. Averages over nearby points
+        to help with the noise.
+
+    Args:
+        centeredge (np.ndarray): position of the center of the edge
+            at each time step.
+        ds (np.ndarray): length from 1 y-coordinate to the next in the edge
+        time_step (float): point in time to calculate expansion.
+        position (float): y coordinate to calculate expansion at.
+        pixel_x_width (float): width of pixels in the x direction.
+        pixel_y_width (float): width of pixels in the y direction.
+        precision (int): distance to average over.
+            Averages over 2 * precision + 1 points.
+
+    Returns:
+        float: ratio of edge length 1 time step later to initial
+            edge length at position and time_step.
+    """
+    stretch = precise_stretch(
+        centeredge, ds, time_step, position,
+        pixel_x_width, pixel_y_width)
+    for index in range(precision):
+        stretch += precise_stretch(
+            centeredge, ds, time_step, position + index,
+            pixel_x_width, pixel_y_width)
+        stretch += precise_stretch(
+            centeredge, ds, time_step, position - index,
+            pixel_x_width, pixel_y_width)
+    stretch /= 2 * precision + 1
+    return stretch
+
+
 def calc_electron_stretch(
     centeredge: np.ndarray,
     ds: np.ndarray,
@@ -558,26 +639,26 @@ def calc_electron_stretch(
     time_scale: float = 1,
     start_index: int = 0,
     end_time: float = None,
-    end_index: float = None,
     pixel_x_width: float = 1,
     pixel_y_width: float = 1,
 ) -> float:
     """
-    Calculates the stretch a wavepacket experiences as it moves along the
+    Calculates the stretch an electron experiences as it moves along the
     expanding/shrinking edge
 
     Args:
         centeredge (np.ndarray): a 2D array with the x-coordinates of the edge
-        at each y coordinate at each point in time.
+            at each y coordinate at each point in time.
         ds (np.ndarray): length from 1 y-coordinate to the next in the edge
         tangent_velocity (np.ndarray): velocity along the edge
         time_scale (float=1): time between elements of gate_potential
-        start_index (int=0): index the electron starts at
+        start_index (int=0): index the electron starts at.
+        end_time (float=None): time to stop calculating stretch.
         pixel_x_width (float=1): width of pixels in the x direction
         pixel_y_width (float=1): width of pixels in the y direction
 
     Returns:
-        float: the scale facotr experienced by the electron
+        float: the scale factor experienced by the electron.
     """
     if end_time is None:
         end_time = len(ds) * time_scale
@@ -604,27 +685,26 @@ def calc_stretch_of_time(
     tangent_velocity: np.ndarray,
     time_scale: float = 1,
     start_index: int = 0,
-    end_index: int = None,
     pixel_x_width: float = 1,
     pixel_y_width: float = 1,
-) -> float:
+) -> np.ndarray:
     """
-    Calculates the stretch a wavepacket experiences as it moves along the
-    expanding/shrinking edge
+    Calculates the stretch an electron experiences as it moves along the
+        expanding/shrinking edge at each time step.
 
     Args:
         centeredge (np.ndarray): a 2D array with the x-coordinates of the edge
-        at each y coordinate at each point in time.
+            at each y coordinate at each point in time.
         ds (np.ndarray): length from 1 y-coordinate to the next in the edge
         tangent_velocity (np.ndarray): velocity along the edge
         time_scale (float=1): time between elements of gate_potential
         start_index (int=0): index the electron starts at
-        end_index (int =None): index the electron ends at
         pixel_x_width (float=1): width of pixels in the x direction
         pixel_y_width (float=1): width of pixels in the y direction
 
     Returns:
-        float: the scale factor experienced by the electron at each time step
+        np.ndarray: the scale factor experienced by an electron
+            at each time step.
     """
 
     ret = np.zeros(len(ds))
@@ -636,12 +716,13 @@ def calc_stretch_of_time(
     return ret
 
 
+# Note: the following function is very buggy and usually doesn't work.
 def find_local_potential_dynamic_magnitude(
     energy: np.ndarray,
     E_F: float,
     gate: np.ndarray,
     desired_scale_factor: np.ndarray,
-    gate_potential_step: float,
+    gate_step: float,
     centeredge: np.ndarray,
     ds: np.ndarray,
     e: float,
@@ -655,12 +736,29 @@ def find_local_potential_dynamic_magnitude(
 ) -> np.ndarray:
     """
     Calculate the required local potential magnitude for a scale factor
-    closest to the desired scale factor
+        close to the desired scale factor. Usually doesn't work.
 
     Args:
-        desired_scale_factor (np.ndarray): 1D array of scale factor at various
-        time steps. Each element should satisfy .93< = scale_factor[t]< = 1.
-        E_F (float): Fermi energy of the material
+        energy (np.ndarray): 2D array of energy values before gate voltage.
+        E_F (float): Fermi energy.
+        gate (np.ndarray): 2D array of relative gate potential values.
+        desired_scale_factor (np.ndarray): 1D array of scale factor at each
+            time step.
+        gate_step (float): energy step of the configuration gate voltage.
+            Configuration gate voltage is assumed to be linear.
+        centeredge (np.ndarray): 2D array of the x coordinates of the edge
+            at each time step of configuration gate potential.
+        ds (np.ndarray): 2D array of the distance to the next edge point
+            at each time step of configuration gate potential.
+        e (float): elementary charge.
+        B (float): applied magnetic field strength.
+        E_scale (float): energy scale. energy * E_scale should be in Joules.
+        tangent_velocity (np.ndarray): 2D array of velocity along the edge at
+            each y coordinate at each time step of configuration gate potential
+        time_scale (float = 1): time between elements of gate_potential
+        start_index (int = 0): index the electron starts at
+        pixel_x_width (float): width of pixels in the x direction.
+        pixel_y_width (float): width of pixels in the y direction.
 
     Returns:
         np.ndarray: an array with the required local potential at each step.
@@ -682,7 +780,7 @@ def find_local_potential_dynamic_magnitude(
         position = calc_path(
             ds, tangent_velocity, time_scale, start_index)[index]
         centeredge[index + 1] = find_center_edge(
-            energy + (ret[index] + gate_potential_step) * gate, E_F)
+            energy + (ret[index] + gate_step) * gate, E_F)
         ds[index + 1] = calc_ds(
             centeredge[index + 1], pixel_x_width, pixel_y_width)
         stretch = calc_stretch(
@@ -691,6 +789,24 @@ def find_local_potential_dynamic_magnitude(
             centeredge, ds, tangent_velocity, time_scale, start_index,
             index * time_scale, pixel_x_width=pixel_x_width,
             pixel_y_width=pixel_y_width)
-        steps = np.log(req) / np.log(stretch)
-        ret[index + 1] = ret[index] + (steps) * gate_potential_step
+        count = 0
+        while (np.log(req) / np.log(stretch) > 1):
+            count += 1
+            centeredge[index + 1] = find_center_edge(
+                energy + (ret[index] + (count + 1) * gate_step) * gate, E_F)
+            ds[index + 1] = calc_ds(
+                centeredge[index + 1], pixel_x_width, pixel_y_width)
+            stretch = calc_stretch(
+                centeredge, ds, index, position, pixel_x_width, pixel_y_width)
+        while (np.log(req) / np.log(stretch) < 0):
+            count -= 1
+            centeredge[index + 1] = find_center_edge(
+                energy + (ret[index] + (count) * gate_step) * gate, E_F)
+            ds[index + 1] = calc_ds(
+                centeredge[index + 1], pixel_x_width, pixel_y_width)
+            stretch = calc_stretch(
+                centeredge, ds, index, position, pixel_x_width, pixel_y_width)
+        steps = np.log(req) / np.log(stretch) + count
+        ret[index + 1] = ret[index] + steps * gate_step
+        print(ret[index + 1])
     return ret

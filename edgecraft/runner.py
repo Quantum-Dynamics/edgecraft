@@ -1,4 +1,5 @@
 import numpy as np
+import scipy
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import const
@@ -10,9 +11,30 @@ y = np.arange(0, len(config.space_matrix[0]), 1)
 energy = np.zeros_like(config.space_matrix, dtype=float)
 energy = basic.apply_QH_energy(energy, const.E_QH, config.bulk_indices)
 energy = basic.apply_confinement_potential(
-    energy, config.bulk_indices, config.boundary_indices, const.alpha)
+    energy, config.bulk_indices, config.boundary_indices,
+    const.alpha, .02)
+# print((basic.find_center_edge(energy, const.E_F)[len(energy) // 2] - (len(
+#     energy[0]) // 2 - config.radius_gate)) * const.unit_length)
 for index in range(len(config.etchings)):
     energy = energy + config.etchings[index] * config.etching_potentials[index]
+ds = []
+velocity = []
+edge_width = []
+centeredge = []
+for index in range(len(config.gate_potential)):
+    e_new = np.copy(energy)
+    e_new = basic.apply_local_varying_potential(
+        e_new, config.gate * config.gate_potential[index])
+
+    centeredge.append(basic.find_center_edge(e_new, const.E_F))
+    ds.append(basic.calc_ds(
+        centeredge[index], const.unit_length, const.unit_length))
+
+    # Calculates velocity in SI units
+    velocity.append(basic.calc_velocity_along_edge(
+        e_new, const.e, const.B_0, const.E_F, const.E_0,
+        const.unit_length, const.unit_length))
+path = basic.calc_path(ds, velocity, config.time_scale, config.start_index)
 
 
 def run(
@@ -20,7 +42,9 @@ def run(
     anim: bool,
     scale_factor: bool,
     dynamics: bool,
+    pulse: bool,
 ) -> None:
+
     print("running...")
     if (energy_graphs):
         print("making energy graphs...")
@@ -34,18 +58,20 @@ def run(
     if (dynamics):
         print("calculating dynamics...")
         show_dynamics()
+    if (pulse):
+        print("calculating pulse...")
+        calc_pulse()
+
     print("Finished!")
 
 
 def show_energy_graphs():
-    # Plotting the energy
-    x = np.arange(0, len(config.space_matrix), 1)
-    y = np.arange(0, len(config.space_matrix[0]), 1)
     energy = np.zeros_like(config.space_matrix, dtype=float)
     energy = basic.apply_QH_energy(energy, const.E_QH, config.bulk_indices)
     energy = basic.apply_confinement_potential(
-        energy, config.bulk_indices, config.boundary_indices, const.alpha)
-
+        energy, config.bulk_indices, config.boundary_indices,
+        const.alpha, .02)
+    # Plotting the energy
     fig, axes = plt.subplots(1, 3, figsize=(15, 4))
     cplot = axes[0].pcolor(
         y,
@@ -68,10 +94,13 @@ def show_energy_graphs():
     )
     axes[1].axhline(
         const.E_F, color="black", linestyle="dashed", label="$E_\mathrm{F}$")
+    axes[1].axhspan(
+        const.E_F - const.U_fluc, const.E_F + const.U_fluc, color="red",
+        alpha=0.3)
     axes[1].hlines(
         2, 130, 130 + 10e-6 / const.unit_length, color="black", linewidth=3)
     axes[1].text(120, 2.5, "10 $\mathrm{\mu m}$")
-    axes[1].set_xlim(101)
+    axes[1].set_xlim(0)
     axes[1].set_ylim(0, const.E_F * 3 / 2)
     axes[1].set_xlabel(
         "distance from material edge  ($" + f"{const.M:d}" + " l_B$)")
@@ -113,10 +142,13 @@ def show_energy_graphs():
     )
     axes[1].axhline(const.E_F, color="black", linestyle="dashed",
                     label="$E_\mathrm{F}$")
+    axes[1].axhspan(
+        const.E_F - const.U_fluc, const.E_F + const.U_fluc, color="red",
+        alpha=0.3)
     axes[1].hlines(2, 130, 130 + 10e-6 / const.unit_length,
                    color="black", linewidth=3)
     axes[1].text(120, 2.5, "10 $\mathrm{\mu m}$")
-    axes[1].set_xlim(101)
+    axes[1].set_xlim(0)
     axes[1].set_ylim(0, const.E_F * 3 / 2)
     axes[1].set_xlabel("distance from material edge  ($" +
                        f"{const.M:d}" + " l_B$)")
@@ -132,6 +164,8 @@ def show_energy_graphs():
     axes[2].set_xlabel("y-position")
     plt.show()
 
+    for index in range(len(config.etchings)):
+        energy -= config.etchings[index] * config.etching_potentials[index]
     energy = basic.apply_local_varying_potential(
         energy,
         config.gate_potential[len(config.gate_potential) // 2] * config.gate)
@@ -148,7 +182,7 @@ def show_energy_graphs():
     axes[0].set_aspect("equal")
     axes[0].set_xlabel("$Y$  ($" + f"{const.M:d}" + " l_B$)")
     axes[0].set_ylabel("$X$  ($" + f"{const.M:d}" + " l_B$)")
-    axes[0].set_title("Potential with some gate voltage")
+    axes[0].set_title("Potential with some gate")
     fig.colorbar(cplot)
 
     axes[1].plot(
@@ -158,24 +192,76 @@ def show_energy_graphs():
     )
     axes[1].axhline(const.E_F, color="black", linestyle="dashed",
                     label="$E_\mathrm{F}$")
+    axes[1].axhspan(
+        const.E_F - const.U_fluc, const.E_F + const.U_fluc, color="red",
+        alpha=0.3)
     axes[1].hlines(2, 130, 130 + 10e-6 / const.unit_length,
                    color="black", linewidth=3)
     axes[1].text(120, 2.5, "10 $\mathrm{\mu m}$")
-    axes[1].set_xlim(101)
+    axes[1].set_xlim(0)
     axes[1].set_ylim(0, const.E_F * 3 / 2)
     axes[1].set_xlabel("distance from material edge  ($" +
                        f"{const.M:d}" + " l_B$)")
     axes[1].legend()
-    axes[1].set_title("Potential profile with some gate voltage")
+    axes[1].set_title("Potential profile with some gate")
+
+    axes[2].plot(
+        basic.calc_velocity_along_edge(
+            energy, const.e, const.B_0, const.E_F,
+            const.E_0, const.unit_length, const.unit_length))
+    axes[2].set_title("Electron velocity along the edge with some gate")
+    axes[2].set_ylabel("velocity")
+    axes[2].set_xlabel("y-position")
+    plt.show()
+
+    for index in range(len(config.etchings)):
+        energy += config.etchings[index] * config.etching_potentials[index]
+
+    fig, axes = plt.subplots(1, 3, figsize=(15, 4))
+    cplot = axes[0].pcolor(
+        y,
+        x,
+        energy,
+        cmap="jet",
+        shading="nearest",
+    )
+    cplot.set_clim(0, const.E_F * 3 / 2)
+    axes[0].set_aspect("equal")
+    axes[0].set_xlabel("$Y$  ($" + f"{const.M:d}" + " l_B$)")
+    axes[0].set_ylabel("$X$  ($" + f"{const.M:d}" + " l_B$)")
+    axes[0].set_title("Potential with gate and etchings")
+    fig.colorbar(cplot)
+
+    axes[1].plot(
+        y,
+        energy[len(x) // 2, :],
+        label="single electron energy",
+    )
+    axes[1].axhline(const.E_F, color="black", linestyle="dashed",
+                    label="$E_\mathrm{F}$")
+    axes[1].axhspan(
+        const.E_F - const.U_fluc, const.E_F + const.U_fluc, color="red",
+        alpha=0.3)
+    axes[1].hlines(2, 130, 130 + 10e-6 / const.unit_length,
+                   color="black", linewidth=3)
+    axes[1].text(120, 2.5, "10 $\mathrm{\mu m}$")
+    axes[1].set_xlim(0)
+    axes[1].set_ylim(0, const.E_F * 3 / 2)
+    axes[1].set_xlabel("distance from material edge  ($" +
+                       f"{const.M:d}" + " l_B$)")
+    axes[1].legend()
+    axes[1].set_title("Potential profile with gate and etchings")
 
     axes[2].plot(
         basic.calc_velocity_along_edge(
             energy, const.e, const.B_0, const.E_F,
             const.E_0, const.unit_length, const.unit_length))
     axes[2].set_title(
-        "Electron velocity along the edge with some gate voltage")
+        "Electron velocity along the edge with gate and etchings")
     axes[2].set_ylabel("velocity")
     axes[2].set_xlabel("y-position")
+    plt.show()
+    plt.plot(basic.find_center_edge(energy, const.E_F))
     plt.show()
 
 
@@ -185,24 +271,6 @@ cbar = None
 def make_animation() -> None:
     fig, axes = plt.subplots(1, 3)
     fig.set_size_inches(14, 4)
-    ds = []
-    velocity = []
-    edge_width = []
-    centeredge = []
-    for index in range(len(config.gate_potential)):
-        e_new = np.copy(energy)
-        e_new = basic.apply_local_varying_potential(
-            e_new, config.gate * config.gate_potential[index])
-
-        centeredge.append(basic.find_center_edge(e_new, const.E_F))
-        ds.append(basic.calc_ds(
-            centeredge[index], const.unit_length, const.unit_length))
-
-        # Calculates velocity in SI units
-        velocity.append(basic.calc_velocity_along_edge(
-            e_new, const.e, const.B_0, const.E_F, const.E_0,
-            const.unit_length, const.unit_length))
-    path = basic.calc_path(ds, velocity, config.time_scale, 400)
 
     def plot_anim(index: int) -> None:
         global cbar
@@ -225,7 +293,6 @@ def make_animation() -> None:
         # Calculates velocity in SI units
         edge_width.append(len(np.where(
             edge[len(edge) // 2] == np.full_like(edge[len(edge) // 2], 1))[0]))
-        print(edge_width[index])
 
         # edge 2D plot
         cplot = axes[0].pcolor(
@@ -258,13 +325,17 @@ def make_animation() -> None:
             1.5, 130, 130 + 10e-6 / const.unit_length,
             color="black", linewidth=3)
         axes[1].text(120, 2.5, "10 $\mu m$")
-        axes[1].set_xlim(101)
+        axes[1].set_xlim(0)
         axes[1].set_ylim(0, const.E_F * 2.5)
         axes[1].set_xlabel("$Y$  ($" + f"{const.M:d}" + " l_B$)")
         axes[1].set_ylabel("Energy  ($e^2 / 4 \pi epsilon l_0$)")
         axes[1].legend(fontsize=12)
 
         axes[2].plot(velocity[index], color='blue')
+        axes[2].axhline(
+            258.2, color="black", linestyle="dashed", label="$start velocity$")
+        axes[2].axhline(
+            1414.95, color="black", linestyle="dashed", label="$end velocity$")
         axes[2].set_title("Electron velocity along the edge")
         axes[2].set_ylabel("velocity")
         axes[2].set_xlabel("y-position")
@@ -275,10 +346,6 @@ def make_animation() -> None:
     ani.save(filename='PoC.gif', writer='pillow', dpi=300)
     plt.close()
 
-    # Since time step 0 is run twice to generate the initial animation figure
-    ds = ds[1:]
-    velocity = velocity[1:]
-
     print("Time it takes for wavepacket to travel along edge (seconds):")
     print(basic.calc_time(ds, velocity, config.time_scale))
     print("Max edge width: ",
@@ -287,8 +354,8 @@ def make_animation() -> None:
 
 def show_scale_factor() -> None:
     scale_factor = basic.test_local_potential_magnitude(
-        energy, config.gate_indices, config.gate_potential, config.bulk,
-        const.E_F, const.U_fluc)
+        energy, config.gate_indices, config.gate_potential,
+        const.E_F, config.gate_start, config.gate_end)
     plt.plot(scale_factor)
     plt.title("Scale factor calculated from edge lengths")
     plt.show()
@@ -308,8 +375,8 @@ def show_scale_factor() -> None:
     axes[0].plot(config.desired_scale_factor)
     axes[0].set_title("Desired scale factor")
     axes[1].plot(basic.test_local_potential_magnitude(
-        energy, config.gate_indices, mag,
-        config.bulk, const.E_F, const.U_fluc))
+        energy, config.gate_indices, mag, const.E_F,
+        config.gate_start, config.gate_end))
     axes[1].set_title("Scale factor calculated from required potential")
     plt.show()
 
@@ -324,8 +391,8 @@ def show_scale_factor() -> None:
         f.write("\n")
         f.write("Scale factor after applying required potential:\n")
         f.write(str(basic.test_local_potential_magnitude(
-            energy, config.gate_indices, mag,
-            config.bulk, const.E_F, const.U_fluc)))
+            energy, config.gate_indices, mag, const.E_F,
+            config.gate_start, config.gate_end)))
     with open("voltage.txt", 'w') as f:
         for x in mag:
             f.write(str(config.convert_to_voltage(x)))
@@ -333,23 +400,9 @@ def show_scale_factor() -> None:
 
 
 def show_dynamics() -> None:
-    ds = []
-    velocity = []
-    centeredge = []
-    for index in range(len(config.gate_potential)):
-        e_new = np.copy(energy)
-        e_new = basic.apply_local_varying_potential(
-            e_new, config.gate_potential[index] * config.gate)
-
-        centeredge.append(basic.find_center_edge(e_new, const.E_F))
-        ds.append(basic.calc_ds(
-            basic.find_center_edge(e_new, const.E_F),
-            const.unit_length, const.unit_length))
-
-        # Calculates velocity in SI units
-        velocity.append(basic.calc_velocity_along_edge(
-            e_new, const.e, const.B_0, const.E_F, const.E_0,
-            const.unit_length, const.unit_length))
+    global velocity
+    global centeredge
+    global ds
     stretch = []
     for index in range(len(centeredge)):
         stretch.append([])
@@ -363,43 +416,58 @@ def show_dynamics() -> None:
         axes.cla()
         axes.plot(stretch[index])
         axes.set_ylim(.985, 1.01)
-    anim = animation.FuncAnimation(fig, animator, interval=100,
-                                   frames=len(config.gate_potential))
+    anim = animation.FuncAnimation(
+        fig, animator, interval=100, frames=len(config.gate_potential))
     anim.save(filename='Stretch.gif', writer='pillow', dpi=300)
     plt.close()
     fig, axes = plt.subplots()
 
     def animator2(index):
         axes.cla()
-        axes.plot(centeredge[index])
-        axes.set_ylim(100, 350)
+        if (index == 0):
+            axes.plot(np.zeros_like(centeredge[0]))
+        else:
+            axes.plot(centeredge[index] - centeredge[index - 1])
+        axes.set_ylim(-.1, .1)
     anim2 = animation.FuncAnimation(
         fig, animator2, interval=100, frames=len(config.gate_potential) - 1)
     anim2.save(filename='Edge_movement.gif', writer='pillow', dpi=300)
     plt.close()
     print("Total stretch")
-    print(np.power(np.prod(stretch), 1 / float(len(stretch[0]))))
-    plt.plot(np.prod(stretch, axis=0))
+    total_stretch = np.power(np.prod(
+        stretch, axis=0), 1 / float(len(stretch[0])))
+    print(np.prod(total_stretch))
+    plt.plot(total_stretch)
     plt.title("stretch map")
+    plt.ylim(min(total_stretch[config.gate_start + 10:config.gate_end - 10]),
+             max(total_stretch[config.gate_start + 10:config.gate_end - 10]))
     plt.show()
-    print("path the electron takes:")
-    print(basic.calc_path(ds, velocity, config.time_scale, 400))
+    plt.plot(path)
+    plt.title("electron path")
+    plt.ylabel("electron y-coordinate")
+    plt.xlabel("time")
+    plt.show()
     print("Electron stretch: ")
     print(basic.calc_electron_stretch(
-        centeredge, ds, velocity, config.time_scale, start_index=400,
+        centeredge, ds, velocity, config.time_scale,
+        start_index=config.start_index,
         pixel_x_width=const.unit_length, pixel_y_width=const.unit_length))
     plt.plot(basic.calc_stretch_of_time(
-        centeredge, ds, velocity, config.time_scale, start_index=400,
+        centeredge, ds, velocity, config.time_scale,
+        start_index=config.start_index,
         pixel_x_width=const.unit_length, pixel_y_width=const.unit_length))
     plt.title("Electron stretch vs time")
     plt.show()
 
+    # The following doesn't work
+    """
     mag = basic.find_local_potential_dynamic_magnitude(
         energy, const.E_F, config.gate,
         config.desired_scale_factor,
         config.gate_potential[1] - config.gate_potential[0],
         centeredge, ds, const.e, const.B_0, const.E_0, velocity,
-        config.time_scale, 400, const.unit_length, const.unit_length)
+        config.time_scale, config.start_index,
+        const.unit_length, const.unit_length)
 
     fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(10, 4))
     # Adjust figsize as needed
@@ -437,7 +505,89 @@ def show_dynamics() -> None:
     axes[0].plot(config.desired_scale_factor)
     axes[0].set_title("Desired scale factor")
     axes[1].plot(basic.calc_stretch_of_time(
-        centeredge, ds, velocity, config.time_scale, start_index=400,
+        centeredge, ds, velocity, config.time_scale,
+        start_index=config.start_index,
         pixel_x_width=const.unit_length, pixel_y_width=const.unit_length))
     axes[1].set_title("Electron scale factor from required magnitude")
+    plt.show()
+    """
+
+
+def calc_pulse():
+    stopping_point = int(
+        (3 * config.gate_end + config.gate_start) / 4)
+    dist = np.sum(
+        ds[0][config.gate_start + 5:stopping_point])
+    # Assuming we let the pulse fill up the region between these indices
+
+    speed = velocity[0]
+    speed = np.average(
+        speed[config.gate_start:config.gate_end])
+    # Assuming the speed is uniform and fluctuation are due to poor pixelation
+    end_speed = velocity[len(velocity) - 1]
+    end_speed = np.average(
+        end_speed[config.gate_start:config.gate_end])
+    speed_difference = end_speed / speed
+    pulse_end_path = basic.calc_path(
+        ds, velocity, config.time_scale, stopping_point)[len(ds) - 1]
+    if (pulse_end_path >= config.gate_end):
+        print("pulse exits the expanding region before expansion is finished.")
+    pulse_time = dist / speed
+    if (pulse_time < 10e-9):
+        print("pulse too short")
+    scale_factor = basic.test_local_potential_magnitude(
+        energy, config.gate_indices,
+        config.gate_potential,
+        const.E_F, config.gate_start,
+        config.gate_end)
+    scale_factor = scale_factor[len(scale_factor) - 1]
+    freq_diff = speed_difference / scale_factor
+    print(freq_diff)
+    frequency = min(10e9, 10e9 * scale_factor / speed_difference)
+    sampling_rate = 100 * frequency  # Hz
+    t = np.linspace(
+        0, pulse_time, int(sampling_rate * pulse_time), endpoint=False)
+    t2 = np.linspace(
+        0, pulse_time / speed_difference, int(
+            sampling_rate * pulse_time), endpoint=False)
+    t3 = np.linspace(
+        0, pulse_time * scale_factor, int(
+            sampling_rate * pulse_time), endpoint=False)
+    t4 = np.linspace(
+        0, pulse_time / freq_diff, int(
+            sampling_rate * pulse_time), endpoint=False)
+    signal = np.sin(2 * np.pi * frequency * t)
+    signal2 = np.sin(
+        2 * np.pi * frequency * speed_difference * t2)
+    signal3 = np.sin(
+        2 * np.pi * frequency / scale_factor * t3)
+    signal4 = np.sin(
+        2 * np.pi * frequency * freq_diff * t4)
+    N = len(signal)
+    frequencies = np.abs(scipy.fft.fftfreq(N, d=1 / sampling_rate))
+    frequencies2 = np.abs(scipy.fft.fftfreq(
+        N, d=1 / sampling_rate / speed_difference))
+    frequencies3 = np.abs(scipy.fft.fftfreq(
+        N, d=1 / sampling_rate * scale_factor))
+    frequencies4 = np.abs(scipy.fft.fftfreq(
+        N, d=1 / sampling_rate / freq_diff))
+    # Compute the FFT and only consider positive frequencies
+    FT = np.abs(scipy.fft.fft(signal))
+    FT2 = np.abs(scipy.fft.fft(signal2))
+    FT3 = np.abs(scipy.fft.fft(signal3))
+    FT4 = np.abs(scipy.fft.fft(signal4))
+    plt.figure(figsize=(10, 6))
+    plt.plot(frequencies, FT, label="Input pulse")
+    plt.plot(frequencies2, FT2, label="Output pulse: velocity shift only")
+    plt.plot(frequencies3, FT3, label="Output pulse: scale factor shift only")
+    plt.plot(frequencies4, FT4,
+             label="Output pulse: velocity and scale factor shift")
+    plt.legend()
+    plt.xlabel('Frequency (Hz)')
+    plt.ylabel('Amplitude')
+    plt.xlim(
+        min(frequency / freq_diff ** .2, freq_diff ** 1.2 * frequency),
+        max(frequency / freq_diff ** .1, freq_diff ** 1.1 * frequency))
+    plt.title('Frequency Spectrum of Signal')
+    plt.grid(True)
     plt.show()

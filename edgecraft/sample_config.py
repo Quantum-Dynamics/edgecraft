@@ -217,6 +217,9 @@ etching_potentials = np.array([U_etching1, U_etching2,
 
 desired_scale_factor = (np.cos(np.arange(1, 100, 1) / 400))**2
 time_scale = 10e-9
+start_index = len(space_matrix) // 2 - radius_gate * .8
+gate_start = len(space_matrix) // 2 - radius_gate
+gate_end = len(space_matrix) // 2 + radius_gate
 
 
 def convert_to_voltage(eff_potential: np.ndarray) -> np.ndarray:
