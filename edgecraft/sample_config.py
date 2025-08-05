@@ -207,16 +207,13 @@ gate[boundary == 1] = 0
 gate_indices = np.array(np.where(gate == 1)).T
 gate_potential = []
 for x in range(0, 101):
-    gate_potential.append(const.E_F * x / 200)
+    gate_potential.append(const.E_F * x / 300)
 
-etchings = np.array([etched1, etched2, etched3, etched4,
-                     etched5, etched6, etched7, etched8, etched9])
-etching_potentials = np.array([U_etching1, U_etching2,
-                               U_etching3, U_etching4, U_etching5, U_etching6,
-                               U_etching7, U_etching8, U_etching9])
+etchings = []
+etching_potentials = np.array([])
 
-desired_scale_factor = (np.cos(np.arange(1, 100, 1) / 400))**2
-time_scale = 10e-9
+desired_scale_factor = (np.cosh(np.arange(1, 100, 1) * .0008))**2
+time_scale = .5e-9
 start_index = len(space_matrix) // 2 - radius_gate * .8
 gate_start = len(space_matrix) // 2 - radius_gate
 gate_end = len(space_matrix) // 2 + radius_gate

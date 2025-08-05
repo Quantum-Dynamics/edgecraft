@@ -38,4 +38,3 @@ if __name__ == '__main__':
 
 # To run this script, use the command line:
 # python click_application.py sample_config.py
-# --energy_graphs=True --anim=True --scale_factor=True --dynamics=True

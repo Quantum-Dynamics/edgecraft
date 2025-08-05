@@ -296,12 +296,31 @@ def find_local_potential_magnitude(
     sf_new = desired_scale_factor / np.max(desired_scale_factor)
     simulated_new = simulated_scale_factor / np.max(simulated_scale_factor)
     for time_step in range(0, len(desired_scale_factor)):
+        # Locates where the scale factor is closest to the desired scale factor
         num = np.where(np.square(simulated_new - sf_new[time_step]) ==
                        np.full_like(simulated_new,
                                     min(np.square(
                                         simulated_new -
                                         sf_new[time_step]))))[0][0]
-        ret[time_step] = gate_potential[num]
+        # Makes it nice and smooth.
+        if (num < len(gate_potential) - 1 and
+                (simulated_new[num] < sf_new[time_step] <
+                    simulated_new[num + 1] or simulated_new[num + 1] <
+                    sf_new[time_step] < simulated_new[num])):
+            prop = (sf_new[time_step] - simulated_new[num])
+            prop /= simulated_new[num + 1] - simulated_new[num]
+            ret[time_step] = (1 - prop) * gate_potential[num]
+            ret[time_step] += prop * gate_potential[num + 1]
+        elif (0 < num and
+                (simulated_new[num - 1] < sf_new[time_step] <
+                    simulated_new[num] or simulated_new[num] <
+                    sf_new[time_step] < simulated_new[num - 1])):
+            prop = (sf_new[time_step] - simulated_new[num - 1])
+            prop /= simulated_new[num] - simulated_new[num - 1]
+            ret[time_step] = (1 - prop) * gate_potential[num - 1]
+            ret[time_step] += prop * gate_potential[num]
+        else:
+            ret[time_step] = gate_potential[num]
     return ret
 
 

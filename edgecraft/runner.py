@@ -66,6 +66,7 @@ def run(
 
 
 def show_energy_graphs():
+    # Makes a copy of energy to do weird things to
     energy = np.zeros_like(config.space_matrix, dtype=float)
     energy = basic.apply_QH_energy(energy, const.E_QH, config.bulk_indices)
     energy = basic.apply_confinement_potential(
@@ -164,8 +165,10 @@ def show_energy_graphs():
     axes[2].set_xlabel("y-position")
     plt.show()
 
+    # Un-applying etchings
     for index in range(len(config.etchings)):
         energy -= config.etchings[index] * config.etching_potentials[index]
+    # Applying gate voltage
     energy = basic.apply_local_varying_potential(
         energy,
         config.gate_potential[len(config.gate_potential) // 2] * config.gate)
@@ -214,6 +217,7 @@ def show_energy_graphs():
     axes[2].set_xlabel("y-position")
     plt.show()
 
+    # Reapplying etchings
     for index in range(len(config.etchings)):
         energy += config.etchings[index] * config.etching_potentials[index]
 
@@ -261,8 +265,6 @@ def show_energy_graphs():
     axes[2].set_ylabel("velocity")
     axes[2].set_xlabel("y-position")
     plt.show()
-    plt.plot(basic.find_center_edge(energy, const.E_F))
-    plt.show()
 
 
 cbar = None
@@ -273,6 +275,7 @@ def make_animation() -> None:
     fig.set_size_inches(14, 4)
 
     def plot_anim(index: int) -> None:
+        # Gets energy and cbar from outside function
         global cbar
         global energy
 
@@ -284,13 +287,14 @@ def make_animation() -> None:
         axes[1].cla()
         axes[2].cla()
 
+        # Makes a copy of energy to mess with
         e_new = energy.copy()
+        # Applies the gate voltage at the time step
         e_new = basic.apply_local_varying_potential(
             e_new, config.gate_potential[index] * config.gate)
 
         edge = basic.find_edge(e_new, const.E_F, const.U_fluc, config.bulk)
 
-        # Calculates velocity in SI units
         edge_width.append(len(np.where(
             edge[len(edge) // 2] == np.full_like(edge[len(edge) // 2], 1))[0]))
 
@@ -306,8 +310,9 @@ def make_animation() -> None:
         axes[0].set_ylabel("$X$  ($" + f"{const.M:d}" + " l_B$)")
         axes[0].set_title(
             f"time: {np.round(index * config.time_scale * 1e9, 2)} ns")
-        axes[0].scatter(x=centeredge[index][int(path[index])],
-                        y=path[index], s=15, c='green', marker='o')
+        if (path[index] < len(energy)):
+            axes[0].scatter(x=centeredge[index][int(path[index])],
+                            y=path[index], s=15, c='green', marker='o')
         cbar = fig.colorbar(cplot, orientation="vertical")
 
         # energy 1D plot
@@ -326,11 +331,12 @@ def make_animation() -> None:
             color="black", linewidth=3)
         axes[1].text(120, 2.5, "10 $\mu m$")
         axes[1].set_xlim(0)
-        axes[1].set_ylim(0, const.E_F * 2.5)
+        axes[1].set_ylim(0, const.E_F * 1.5)
         axes[1].set_xlabel("$Y$  ($" + f"{const.M:d}" + " l_B$)")
         axes[1].set_ylabel("Energy  ($e^2 / 4 \pi epsilon l_0$)")
         axes[1].legend(fontsize=12)
 
+        # velocity 1D plot
         axes[2].plot(velocity[index], color='blue')
         axes[2].axhline(
             258.2, color="black", linestyle="dashed", label="$start velocity$")
@@ -339,7 +345,7 @@ def make_animation() -> None:
         axes[2].set_title("Electron velocity along the edge")
         axes[2].set_ylabel("velocity")
         axes[2].set_xlabel("y-position")
-        axes[2].set_ylim(0, 2.10e3)
+        axes[2].set_ylim(0, np.max(velocity))
         print("Completed animation step ", index)
     ani = animation.FuncAnimation(
         fig, plot_anim, interval=100, frames=len(config.gate_potential))
@@ -353,33 +359,36 @@ def make_animation() -> None:
 
 
 def show_scale_factor() -> None:
+    # Calculates scale factor from gate potential
     scale_factor = basic.test_local_potential_magnitude(
-        energy, config.gate_indices, config.gate_potential,
+        energy, config.gate, config.gate_potential,
         const.E_F, config.gate_start, config.gate_end)
     plt.plot(scale_factor)
-    plt.title("Scale factor calculated from edge lengths")
+    plt.title("Scale factor calculated from configuration gate potential")
     plt.show()
 
+    # Calculates required gate potential for desired scale factor
     mag = basic.find_local_potential_magnitude(
         config.desired_scale_factor, scale_factor, config.gate_potential)
     fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(10, 4))
-    # Adjust figsize as needed
     axes[0].plot(config.gate_potential)
     axes[0].set_title("configuration gate potential")
     axes[1].plot(mag)
     axes[1].set_title("required gate potential for desired scale factor")
     plt.show()
 
+    # Compares the resulting scale factor with the desired scale factor.
     fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(10, 4))
-    # Adjust figsize as needed
     axes[0].plot(config.desired_scale_factor)
     axes[0].set_title("Desired scale factor")
     axes[1].plot(basic.test_local_potential_magnitude(
-        energy, config.gate_indices, mag, const.E_F,
+        energy, config.gate, mag, const.E_F,
         config.gate_start, config.gate_end))
     axes[1].set_title("Scale factor calculated from required potential")
     plt.show()
 
+    # Saves scale factor from configuration gate potential, required gate
+    # potential, and scale factor from required potential into txt files
     with open("results.txt", 'w') as f:
         f.write("Scale factor:\n")
         f.write(str(scale_factor))
@@ -391,7 +400,7 @@ def show_scale_factor() -> None:
         f.write("\n")
         f.write("Scale factor after applying required potential:\n")
         f.write(str(basic.test_local_potential_magnitude(
-            energy, config.gate_indices, mag, const.E_F,
+            energy, config.gate, mag, const.E_F,
             config.gate_start, config.gate_end)))
     with open("voltage.txt", 'w') as f:
         for x in mag:
@@ -403,6 +412,7 @@ def show_dynamics() -> None:
     global velocity
     global centeredge
     global ds
+    # Computes the relative scale factor at each point in time and space
     stretch = []
     for index in range(len(centeredge)):
         stretch.append([])
@@ -413,22 +423,25 @@ def show_dynamics() -> None:
     fig, axes = plt.subplots()
 
     def animator(index):
+        # Animates the relative change in edge length at each point
         axes.cla()
         axes.plot(stretch[index])
-        axes.set_ylim(.985, 1.01)
+        axes.set_ylim(np.min(stretch), np.max(stretch))
     anim = animation.FuncAnimation(
         fig, animator, interval=100, frames=len(config.gate_potential))
     anim.save(filename='Stretch.gif', writer='pillow', dpi=300)
     plt.close()
     fig, axes = plt.subplots()
+    diff_edge = np.array(centeredge[1:]) - np.array(centeredge[:-1])
 
     def animator2(index):
+        # Animates the movement of the edge.
         axes.cla()
         if (index == 0):
             axes.plot(np.zeros_like(centeredge[0]))
         else:
-            axes.plot(centeredge[index] - centeredge[index - 1])
-        axes.set_ylim(-.1, .1)
+            axes.plot(diff_edge[index - 1])
+        axes.set_ylim(np.max(diff_edge), np.min(diff_edge))
     anim2 = animation.FuncAnimation(
         fig, animator2, interval=100, frames=len(config.gate_potential) - 1)
     anim2.save(filename='Edge_movement.gif', writer='pillow', dpi=300)
@@ -438,7 +451,7 @@ def show_dynamics() -> None:
         stretch, axis=0), 1 / float(len(stretch[0])))
     print(np.prod(total_stretch))
     plt.plot(total_stretch)
-    plt.title("stretch map")
+    plt.title("stretch map (average stretch per time step)")
     plt.ylim(min(total_stretch[config.gate_start + 10:config.gate_end - 10]),
              max(total_stretch[config.gate_start + 10:config.gate_end - 10]))
     plt.show()
@@ -514,6 +527,8 @@ def show_dynamics() -> None:
 
 
 def calc_pulse():
+    # We should let the pulse fill up the region between this point and
+    # the beginning of the expanding region.
     stopping_point = int(
         (3 * config.gate_end + config.gate_start) / 4)
     dist = np.sum(
@@ -527,22 +542,25 @@ def calc_pulse():
     end_speed = velocity[len(velocity) - 1]
     end_speed = np.average(
         end_speed[config.gate_start:config.gate_end])
+    # The speed changes as the potential changes. Difference in speed causes
+    # nodes of the pulse to be closer in time, thus increasing frequency.
     speed_difference = end_speed / speed
     pulse_end_path = basic.calc_path(
         ds, velocity, config.time_scale, stopping_point)[len(ds) - 1]
     if (pulse_end_path >= config.gate_end):
         print("pulse exits the expanding region before expansion is finished.")
     pulse_time = dist / speed
+    # Our machine can't emit short pulses
     if (pulse_time < 10e-9):
         print("pulse too short")
+    # We're tyring to measure scale factor redshift.
     scale_factor = basic.test_local_potential_magnitude(
-        energy, config.gate_indices,
+        energy, config.gate,
         config.gate_potential,
         const.E_F, config.gate_start,
         config.gate_end)
     scale_factor = scale_factor[len(scale_factor) - 1]
     freq_diff = speed_difference / scale_factor
-    print(freq_diff)
     frequency = min(10e9, 10e9 * scale_factor / speed_difference)
     sampling_rate = 100 * frequency  # Hz
     t = np.linspace(
@@ -577,6 +595,7 @@ def calc_pulse():
     FT3 = np.abs(scipy.fft.fft(signal3))
     FT4 = np.abs(scipy.fft.fft(signal4))
     plt.figure(figsize=(10, 6))
+    # Calculates shift due to each combination of velocity and scale factor
     plt.plot(frequencies, FT, label="Input pulse")
     plt.plot(frequencies2, FT2, label="Output pulse: velocity shift only")
     plt.plot(frequencies3, FT3, label="Output pulse: scale factor shift only")
@@ -585,6 +604,8 @@ def calc_pulse():
     plt.legend()
     plt.xlabel('Frequency (Hz)')
     plt.ylabel('Amplitude')
+    # Makes the plots all appear on screen. Won't work if the scale factor
+    # redshift is too large compared to velocity redshift.
     plt.xlim(
         min(frequency / freq_diff ** .2, freq_diff ** 1.2 * frequency),
         max(frequency / freq_diff ** .1, freq_diff ** 1.1 * frequency))

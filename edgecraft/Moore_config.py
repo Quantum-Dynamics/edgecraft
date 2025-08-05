@@ -1,5 +1,7 @@
 import numpy as np
 import const
+
+
 def true_circle_in(
     Y: np.ndarray,
     X: np.ndarray,
@@ -49,133 +51,6 @@ bulk_indices = np.array(np.where(bulk == 1)).T
 
 vacuum = ((~space_matrix.astype(bool)).astype(int)).copy()
 
-
-U_etching9 = 0.3
-U_etching8 = U_etching9 + 0.3
-U_etching7 = U_etching8 + 0.3
-U_etching6 = U_etching7 + 0.3
-U_etching5 = U_etching6 + 0.3
-U_etching4 = U_etching5 + 0.3
-U_etching3 = U_etching4 + 0.3
-U_etching2 = U_etching3 + 0.3
-U_etching1 = U_etching2 + 0.3
-# shallow etching region 1
-etched1 = np.logical_xor(
-    true_circle_in(Y, X, y[len(y) // 2], x[len(x) // 2], radius_gate),
-    true_circle_in(Y, X, y[len(y) // 2], x[len(x) // 2], radius_gate - int(5e-6 / const.unit_length)),
-).astype(int)
-etched1[Y >= y[len(y) // 2]] = 0
-etched1[boundary == 1] = 0
-etched1_indices = np.array(np.where(etched1 == 1)).T
-
-# shallow etching region 2
-etched2 = np.logical_xor(
-    true_circle_in(Y, X, y[len(y) // 2], x[len(x) // 2], radius_gate - int(5e-6 / const.unit_length)),
-    true_circle_in(Y, X, y[len(y) // 2], x[len(x) // 2], radius_gate - int(9e-6 / const.unit_length)),
-).astype(int)
-etched2[Y >= y[len(y) // 2]] = 0
-etched2[boundary == 1] = 0
-etched2[etched1 == 1] = 0
-etched2_indices = np.array(np.where(etched2 == 1)).T
-
-# shallow etching region 3
-etched3 = np.logical_xor(
-    true_circle_in(Y, X, y[len(y) // 2], x[len(x) // 2], radius_gate - int(9e-6 / const.unit_length)),
-    true_circle_in(Y, X, y[len(y) // 2], x[len(x) // 2], radius_gate - int(11e-6 / const.unit_length)),
-).astype(int)
-etched3[Y >= y[len(y) // 2]] = 0
-etched3[boundary == 1] = 0
-etched3[etched1 == 1] = 0
-etched3[etched2 == 1] = 0
-etched3_indices = np.array(np.where(etched3 == 1)).T
-
-# shallow etching region 4
-etched4 = np.logical_xor(
-    true_circle_in(Y, X, y[len(y) // 2], x[len(x) // 2], radius_gate - int(11e-6 / const.unit_length)),
-    true_circle_in(Y, X, y[len(y) // 2], x[len(x) // 2], radius_gate - int(13e-6 / const.unit_length)),
-).astype(int)
-etched4[Y >= y[len(y) // 2]] = 0
-etched4[boundary == 1] = 0
-etched4[etched1 == 1] = 0
-etched4[etched2 == 1] = 0
-etched4[etched3 == 1] = 0
-etched4_indices = np.array(np.where(etched4 == 1)).T
-
-# shallow etching region 5
-etched5 = np.logical_xor(
-    true_circle_in(Y, X, y[len(y) // 2], x[len(x) // 2], radius_gate - int(13e-6 / const.unit_length)),
-    true_circle_in(Y, X, y[len(y) // 2], x[len(x) // 2], radius_gate - int(15e-6 / const.unit_length)),
-).astype(int)
-etched5[Y >= y[len(y) // 2]] = 0
-etched5[boundary == 1] = 0
-etched5[etched1 == 1] = 0
-etched5[etched2 == 1] = 0
-etched5[etched3 == 1] = 0
-etched5[etched4 == 1] = 0
-etched5_indices = np.array(np.where(etched5 == 1)).T
-
-# shallow etching region 6
-etched6 = np.logical_xor(
-    true_circle_in(Y, X, y[len(y) // 2], x[len(x) // 2], radius_gate - int(15e-6 / const.unit_length)),
-    true_circle_in(Y, X, y[len(y) // 2], x[len(x) // 2], radius_gate - int(17e-6 / const.unit_length)),
-).astype(int)
-etched6[Y >= y[len(y) // 2]] = 0
-etched6[boundary == 1] = 0
-etched6[etched1 == 1] = 0
-etched6[etched2 == 1] = 0
-etched6[etched3 == 1] = 0
-etched6[etched4 == 1] = 0
-etched6[etched5 == 1] = 0
-etched6_indices = np.array(np.where(etched6 == 1)).T
-
-# shallow etching region 7
-etched7 = np.logical_xor(
-    true_circle_in(Y, X, y[len(y) // 2], x[len(x) // 2], radius_gate - int(17e-6 / const.unit_length)),
-    true_circle_in(Y, X, y[len(y) // 2], x[len(x) // 2], radius_gate - int(19e-6 / const.unit_length)),
-).astype(int)
-etched7[Y >= y[len(y) // 2]] = 0
-etched7[boundary == 1] = 0
-etched7[etched1 == 1] = 0
-etched7[etched2 == 1] = 0
-etched7[etched3 == 1] = 0
-etched7[etched4 == 1] = 0
-etched7[etched5 == 1] = 0
-etched7[etched6 == 1] = 0
-etched7_indices = np.array(np.where(etched7 == 1)).T
-
-# shallow etching region 8
-etched8 = np.logical_xor(
-    true_circle_in(Y, X, y[len(y) // 2], x[len(x) // 2], radius_gate - int(19e-6 / const.unit_length)),
-    true_circle_in(Y, X, y[len(y) // 2], x[len(x) // 2], radius_gate - int(21e-6 / const.unit_length)),
-).astype(int)
-etched8[Y >= y[len(y) // 2]] = 0
-etched8[boundary == 1] = 0
-etched8[etched1 == 1] = 0
-etched8[etched2 == 1] = 0
-etched8[etched3 == 1] = 0
-etched8[etched4 == 1] = 0
-etched8[etched5 == 1] = 0
-etched8[etched6 == 1] = 0
-etched8[etched7 == 1] = 0
-etched8_indices = np.array(np.where(etched8 == 1)).T
-
-# shallow etching region 9
-etched9 = np.logical_xor(
-    true_circle_in(Y, X, y[len(y) // 2], x[len(x) // 2], radius_gate - int(21e-6 / const.unit_length)),
-    true_circle_in(Y, X, y[len(y) // 2], x[len(x) // 2], radius_gate - int(23e-6 / const.unit_length)),
-).astype(int)
-etched9[Y >= y[len(y) // 2]] = 0
-etched9[boundary == 1] = 0
-etched9[etched1 == 1] = 0
-etched9[etched2 == 1] = 0
-etched9[etched3 == 1] = 0
-etched9[etched4 == 1] = 0
-etched9[etched5 == 1] = 0
-etched9[etched6 == 1] = 0
-etched9[etched7 == 1] = 0
-etched9[etched8 == 1] = 0
-etched9_indices = np.array(np.where(etched9 == 1)).T
-
 # expansion gate
 gate = (true_circle_in(
     Y, X, y[len(y) // 2], x[len(x) // 2], radius_gate)).astype(float)
@@ -191,22 +66,22 @@ def find_gate_potential(max_edge_width, B):
     # Did a bunch of calculus; This is the function to satisfy for as many z
     def metric(a, b, c) -> float:
         def g(z):
-            return (2 * a * z + b)*(const.E_F * z**3 / 2 - B * z) - (a * z**2 + b * z + c) * (s * z**3 - 2 * B)
-        zeros = np.roots([-s * a, 2 * a*const.E_F / 2 - s * b, b * const.E_F / 2 - s * c, 0, B * b, 2 * B * c])
+            return (2 * a * z + b) * (const.E_F * z**3 / 2 - B * z) - (a * z ** 2 + b * z + c) * (s * z**3 - 2 * B)
+        zeros = np.roots([-s * a, 2 * a * const.E_F / 2 - s * b, b * const.E_F / 2 - s * c, 0, B * b, 2 * B * c])
         real_zeros = [root.real for root in zeros if abs(root.imag) < 1e-9]
-        real_positive_zeros = [root.real for root in real_zeros if root.real>0]
+        real_positive_zeros = [root.real for root in real_zeros if root.real > 0]
         zero = np.min(real_positive_zeros)
 
-        if(0<-b/(2*a)<zero):
-            if(4*(a*(-b/(2*a))**2+b*(-b/(2*a))+c)<(a*(zero**2)+b*zero+c)):
+        if (0 < -b / (2 * a) < zero):
+            if (4 * (a * (-b / (2 * a)) ** 2 + b * (-b / (2 * a)) + c) < (a * (zero ** 2) + b * zero + c)):
                 return -1
-            elif(.25*(a*(-b/(2*a))**2+b*(-b/(2*a))+c)>(a*(zero**2)+b*zero+c)):
+            elif (.25 * (a * (-b / (2 * a))**2 + b * (-b / (2 * a)) + c) > (a * (zero**2) + b * zero + c)):
                 return -1
-            #return (-b+np.sqrt(b**2-4*a*(2*a*(-b/(2*a))**2+2*b*(-b/(2*a))-c)))/(2*a)
-        elif(a*(zero**2)+b*zero+c<c/4):
+            # return (-b+np.sqrt(b**2-4*a*(2*a*(-b/(2*a))**2+2*b*(-b/(2*a))-c)))/(2*a)
+        elif (a * (zero ** 2) + b * zero + c < c / 4):
             return -1
-            #return (-b+np.sqrt(b**2+4*a*c))/(2*a)
-        elif(4*c<a*(zero**2)+b*zero+c):
+            # return (-b+np.sqrt(b**2+4*a*c))/(2*a)
+        elif (4 * c < a * (zero**2) + b * zero + c):
             return -1
         return zero
 
@@ -269,7 +144,7 @@ etchings = np.array([])
 etching_potentials = np.array([])
 
 desired_scale_factor = (np.cos(np.arange(1, 100, 1) / 400))**2
-time_scale = 10e-9
+time_scale = 1e-9
 start_index = len(space_matrix) // 2 - radius_gate * .8
 gate_start = len(space_matrix) // 2 - radius_gate
 gate_end = len(space_matrix) // 2 + radius_gate
