@@ -10,7 +10,7 @@ from edgecraft import (
     calc_edge_length,
     calc_magneticfield_for_nu,
     calc_thermal_energy,
-    calc_unit_length_energy,
+    calc_unit_length_energy_time,
     find_edge,
     true_circle_in,
     e,
@@ -24,7 +24,7 @@ T = 40e-3                               # K
 
 # Calculate unit length and energy
 M = 20
-l_0, E_0 = calc_unit_length_energy(B_0, M)
+l_0, E_0, t_0 = calc_unit_length_energy_time(B_0, M)
 E_LL_gap = calc_Landau_level_gap(B_0, E_0)
 E_F = E_LL_gap / 2
 E_QH = E_F / 2

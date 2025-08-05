@@ -10,6 +10,7 @@ python = "^3.10"
 matplotlib = "^3.10.1"
 numpy = "^2.2.5"
 click = "^8.2.1"
+gileum = "^0.2.2"
 
 
 [tool.poetry.group.dev.dependencies]
